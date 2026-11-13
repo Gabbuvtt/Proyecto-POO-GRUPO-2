@@ -34,7 +34,7 @@ def a_coordenada(fila, col):
 
 
 def desde_coordenada(coordenada):
-    # "C3" -> (2, 2): la letra es la columna y el numero la fila
+    # C3 -> (2, 2), la letra es la columna y el numero la fila
     if len(coordenada) < 2:
         raise ValueError("Coordenada invalida")
     letra = coordenada[0]
@@ -46,6 +46,16 @@ def desde_coordenada(coordenada):
     if not dentro_del_tablero(fila, col):
         raise ValueError("Coordenada fuera del tablero")
     return fila, col
+
+
+def buscar_casillas(tablero, tipo):
+    # devuelve las posiciones (fila, col) de un tipo de casilla
+    posiciones = []
+    for fila in range(FILAS):
+        for col in range(COLUMNAS):
+            if tablero[fila][col] == tipo:
+                posiciones.append((fila, col))
+    return posiciones
 
 
 def vecinos(fila, col):
