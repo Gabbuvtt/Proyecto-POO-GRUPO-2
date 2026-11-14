@@ -5,6 +5,8 @@ from validaciones import (
     campamento_tiene_vecinos,
     distancias_desde,
     hay_templo_cercano,
+    largo_ruta,
+    ruta_valida,
 )
 
 
@@ -86,11 +88,40 @@ class PruebasCampamento(unittest.TestCase):
         self.assertTrue(hay_templo_cercano(tablero_ejemplo()))
 
     def test_templos_lejos_del_campamento(self):
-        # sin B3 ni C4, el templo mas cercano (B1) esta a 3
+        # sin B3 ni C4, el templo mas cercano B1 esta a 3
         tablero = tablero_ejemplo()
         poner(tablero, "B3", TipoCasilla.SENDERO)
         poner(tablero, "C4", TipoCasilla.SENDERO)
         self.assertFalse(hay_templo_cercano(tablero))
+
+
+class PruebasRuta(unittest.TestCase):
+
+    def test_largo_de_la_ruta(self):
+        # C3-B3-C4-C3-D2-C3 = 1+2+1+2+2 = 8
+        tablero = tablero_ejemplo()
+        largo = largo_ruta(tablero, desde_coordenada("B3"), desde_coordenada("C4"))
+        self.assertEqual(largo, 8)
+
+    def test_ruta_corta_es_valida(self):
+        tablero = tablero_ejemplo()
+        self.assertTrue(ruta_valida(tablero, desde_coordenada("B3"), desde_coordenada("C4")))
+        self.assertTrue(ruta_valida(tablero, desde_coordenada("C4"), desde_coordenada("B3")))
+
+    def test_ruta_larga_no_es_valida(self):
+        # con B1 y A5 la ruta suma 16 en cualquier orden
+        tablero = tablero_ejemplo()
+        self.assertFalse(ruta_valida(tablero, desde_coordenada("B1"), desde_coordenada("A5")))
+
+    def test_ruta_bloqueada_no_es_valida(self):
+        # A5 queda encerrado por pantanos
+        tablero = tablero_ejemplo()
+        poner(tablero, "A4", TipoCasilla.PANTANO)
+        poner(tablero, "B5", TipoCasilla.PANTANO)
+        templo1 = desde_coordenada("B3")
+        templo2 = desde_coordenada("A5")
+        self.assertIsNone(largo_ruta(tablero, templo1, templo2))
+        self.assertFalse(ruta_valida(tablero, templo1, templo2))
 
 
 if __name__ == "__main__":
