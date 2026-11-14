@@ -1,7 +1,11 @@
 import unittest
 
 from tablero import TipoCasilla, desde_coordenada
-from validaciones import distancias_desde
+from validaciones import (
+    campamento_tiene_vecinos,
+    distancias_desde,
+    hay_templo_cercano,
+)
 
 
 def tablero_ejemplo():
@@ -25,6 +29,11 @@ def tablero_ejemplo():
         fila, col = desde_coordenada(coordenada)
         tablero[fila][col] = tipo
     return tablero
+
+
+def poner(tablero, coordenada, tipo):
+    fila, col = desde_coordenada(coordenada)
+    tablero[fila][col] = tipo
 
 
 def distancia(distancias, coordenada):
@@ -58,6 +67,30 @@ class PruebasDistancias(unittest.TestCase):
         # E5 queda rodeada por D5 y E4
         distancias = distancias_desde(tablero, desde_coordenada("C3"))
         self.assertIsNone(distancia(distancias, "E5"))
+
+
+class PruebasCampamento(unittest.TestCase):
+
+    def test_campamento_con_vecinos_libres(self):
+        self.assertTrue(campamento_tiene_vecinos(tablero_ejemplo()))
+
+    def test_campamento_rodeado_de_pantanos(self):
+        # solo C4 queda libre alrededor de C3
+        tablero = tablero_ejemplo()
+        poner(tablero, "B3", TipoCasilla.PANTANO)
+        poner(tablero, "D3", TipoCasilla.PANTANO)
+        poner(tablero, "C2", TipoCasilla.PANTANO)
+        self.assertFalse(campamento_tiene_vecinos(tablero))
+
+    def test_templo_cercano(self):
+        self.assertTrue(hay_templo_cercano(tablero_ejemplo()))
+
+    def test_templos_lejos_del_campamento(self):
+        # sin B3 ni C4, el templo mas cercano (B1) esta a 3
+        tablero = tablero_ejemplo()
+        poner(tablero, "B3", TipoCasilla.SENDERO)
+        poner(tablero, "C4", TipoCasilla.SENDERO)
+        self.assertFalse(hay_templo_cercano(tablero))
 
 
 if __name__ == "__main__":
