@@ -71,10 +71,4 @@ public class Participante {
         this.puntos = this.puntos + puntosGanados;
         return puntosGanados;
     }
-
-    public void sumarPuntos(int puntosExtra) {
-        if (puntosExtra > 0) {
-            this.puntos = this.puntos + puntosExtra;
-        }
-    }
 }
