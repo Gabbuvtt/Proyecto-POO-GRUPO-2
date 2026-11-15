@@ -13,6 +13,7 @@ public class Partida {
     private int rondaActual;
     private int accionesRestantes;
     private EstadoDePartida estado;
+    private boolean cofreAbierto;
 
     private HashSet<String> templosExplorados;
     private ArrayList<Pista> pistasDescubiertas;
@@ -29,6 +30,7 @@ public class Partida {
         this.turnoActual = participante1;
         this.accionesRestantes = ReglasDelJuego.getAccionesPorTurno();
         this.estado = EstadoDePartida.EN_CURSO;
+        this.cofreAbierto = false;
 
         this.templosExplorados = new HashSet<>();
         this.pistasDescubiertas = new ArrayList<>();
@@ -152,9 +154,13 @@ public class Partida {
         }
     }
 
-    public void finalizarPartidaPorCofre() {
-        this.estado = EstadoDePartida.FINALIZADA;
-        this.accionesRestantes = 0;
+    // --- COFRE ---
+    public boolean estaCofreAbierto() {
+        return cofreAbierto;
+    }
+
+    public void abrirCofre() {
+        this.cofreAbierto = true;
     }
 
     // Ver Quien gano y desempate
