@@ -41,6 +41,26 @@ class EstadoPartida(BaseModel):
     ganadores: list[str]
 
 
+class ContenidoTemplo(BaseModel):
+    coordenada: str
+    reliquia: Reliquia
+    pista: Pista | None
+
+
+class PaqueteCofre(BaseModel):
+    partidaId: str
+    cofreId: str
+    algoritmo: str
+    kdf: str
+    iteraciones: int
+    longitudClaveBits: int
+    saltBase64: str
+    nonceBase64: str
+    tagBits: int
+    aadBase64: str
+    cifradoConTagBase64: str
+
+
 class PartidaPublica(BaseModel):
     partidaId: str
     terreno: list[list[str]]
