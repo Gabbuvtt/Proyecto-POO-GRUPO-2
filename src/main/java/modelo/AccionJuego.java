@@ -1,5 +1,7 @@
 package modelo;
 
+/** Accion que un participante puede hacer en su turno. */
 public interface AccionJuego {
-    boolean ejecutar(Partida partida);
+    /** Ejecuta la accion sobre la partida y devuelve OK o el motivo del rechazo. */
+    ResultadoAccion ejecutar(Partida partida);
 }

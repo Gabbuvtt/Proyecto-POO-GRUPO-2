@@ -112,9 +112,9 @@ public class Partida {
     }
 
     // --- POLIMORFISMO: EJECUTAR CUALQUIER ACCIÓN ---
-    public boolean ejecutarAccion(AccionJuego accion) {
+    public ResultadoAccion ejecutarAccion(AccionJuego accion) {
         if (accion == null) {
-            return false;
+            throw new IllegalArgumentException("La accion no puede ser nula");
         }
         return accion.ejecutar(this);
     }

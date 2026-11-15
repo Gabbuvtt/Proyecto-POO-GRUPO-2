@@ -8,31 +8,31 @@ public class AccionMover implements AccionJuego {
     }
 
     @Override
-    public boolean ejecutar(Partida partida) {
+    public ResultadoAccion ejecutar(Partida partida) {
         if (partida.getEstado() != EstadoDePartida.EN_CURSO) {
-            return false;
+            return ResultadoAccion.PARTIDA_FINALIZADA;
         }
 
         if (!partida.getTablero().estaDentroDelTablero(destino)) {
-            return false;
+            return ResultadoAccion.FUERA_DEL_MAPA;
         }
 
         Participante actual = partida.getTurnoActual();
         Coordenada origen = actual.getPosicion();
 
         if (!origen.esVecinaOrtogonal(destino)) {
-            return false;
+            return ResultadoAccion.NO_ES_VECINO;
         }
 
         Casilla casillaDestino = partida.getTablero().obtenerCasilla(destino);
         int costo = casillaDestino.getTipo().getCosto();
 
         if (partida.getAccionesRestantes() < costo) {
-            return false;
+            return ResultadoAccion.SIN_ACCIONES;
         }
 
         actual.setPosicion(destino);
         partida.consumirAcciones(costo);
-        return true;
+        return ResultadoAccion.OK;
     }
 }
