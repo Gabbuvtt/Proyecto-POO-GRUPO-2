@@ -2,6 +2,7 @@ import copy
 import unittest
 
 import almacen
+import main
 from main import ErrorApi, consultar_cofre, consultar_templo, crear_partida
 from modelos import ContenidoTemplo, PaqueteCofre, PeticionPartida
 from tablero import TipoCasilla, a_coordenada, buscar_casillas
@@ -69,6 +70,16 @@ class PruebasConsultas(unittest.TestCase):
         consultar_templo(self.partida_id, self.templo_sin_pista())
         consultar_cofre(self.partida_id)
         self.assertEqual(self.partida, antes)
+
+
+class PruebasSwagger(unittest.TestCase):
+
+    def test_documenta_400_y_no_422(self):
+        rutas = main.app.openapi()["paths"]
+        for ruta in rutas.values():
+            for operacion in ruta.values():
+                self.assertIn("400", operacion["responses"])
+                self.assertNotIn("422", operacion["responses"])
 
 
 if __name__ == "__main__":

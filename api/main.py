@@ -1,5 +1,6 @@
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
 from almacen import (
@@ -156,6 +157,7 @@ def consultar_templo(partida_id: str, coord: str):
     description="Devuelve el paquete cifrado completo del cofre (formato del Anexo B). "
                 "Nunca incluye la contrasena, la clave ni el texto descifrado.",
     responses={
+        400: {"model": Error, "description": "Peticion invalida"},
         404: {"model": Error, "description": "Partida inexistente"},
     },
 )
@@ -165,3 +167,19 @@ def consultar_cofre(partida_id: str):
 
 
 app.include_router(rutas)
+
+
+def esquema_sin_422():
+    # FastAPI documenta 422 solo, pero la API responde 400 en su lugar
+    if app.openapi_schema is None:
+        esquema = get_openapi(title=app.title, version=app.version, routes=app.routes)
+        for ruta in esquema["paths"].values():
+            for operacion in ruta.values():
+                operacion["responses"].pop("422", None)
+        esquema["components"]["schemas"].pop("HTTPValidationError", None)
+        esquema["components"]["schemas"].pop("ValidationError", None)
+        app.openapi_schema = esquema
+    return app.openapi_schema
+
+
+app.openapi = esquema_sin_422
