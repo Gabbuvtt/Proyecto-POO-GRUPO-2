@@ -108,11 +108,7 @@ public class Partida {
     }
 
     public boolean tienenTodasLasPistas() {
-        if (pistasOcultas.size() > 0 && pistasDescubiertas.size() >= pistasOcultas.size()) {
-            return true;
-        } else {
-            return false;
-        }
+        return pistasDescubiertas.size() >= 2;
     }
 
     // --- POLIMORFISMO: EJECUTAR CUALQUIER ACCIÓN ---
