@@ -52,6 +52,20 @@ class PruebasGenerarPartida(unittest.TestCase):
     def test_guarda_la_semilla(self):
         self.assertIsInstance(self.partida["semilla"], int)
 
+    def test_distinta_a_la_anterior(self):
+        nueva = generar_partida("PAR-003", ["J2", "J1"], self.partida)
+        self.assertNotEqual(nueva["campamento"], self.partida["campamento"])
+        self.assertNotEqual(nueva["cofre"], self.partida["cofre"])
+        pistas_nuevas = list(nueva["pistas"].values())
+        pistas_anteriores = list(self.partida["pistas"].values())
+        self.assertNotEqual(pistas_nuevas[0], pistas_anteriores[0])
+        self.assertNotEqual(pistas_nuevas[1], pistas_anteriores[1])
+
+    def test_descarta_candidato_igual_al_anterior(self):
+        candidato = partidas.armar_candidato(self.partida["semilla"], ["J1", "J2"])
+        self.assertFalse(partidas.es_distinta(candidato, self.partida))
+        self.assertTrue(partidas.es_distinta(candidato, None))
+
     def test_ningun_candidato_sirve(self):
         with mock.patch.object(partidas, "es_candidato_valido", return_value=False):
             with self.assertRaises(GeneracionFallida):

@@ -2,7 +2,7 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from almacen import guardar_partida, jugador_existe, nuevo_partida_id
+from almacen import guardar_partida, jugador_existe, nuevo_partida_id, partida_anterior
 from modelos import Error, PartidaPublica, PeticionPartida
 from partidas import GeneracionFallida, generar_partida
 
@@ -79,7 +79,8 @@ def a_publica(partida):
 def crear_partida(peticion: PeticionPartida):
     validar_jugadores(peticion.jugadores)
     try:
-        partida = generar_partida(nuevo_partida_id(), peticion.jugadores)
+        anterior = partida_anterior(peticion.jugadores)
+        partida = generar_partida(nuevo_partida_id(), peticion.jugadores, anterior)
     except GeneracionFallida:
         raise ErrorApi(503, "GENERACION_FALLIDA", "No se pudo generar un tablero valido")
     guardar_partida(partida)

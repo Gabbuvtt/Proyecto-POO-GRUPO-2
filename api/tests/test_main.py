@@ -36,6 +36,14 @@ class PruebasCrearPartida(unittest.TestCase):
         respuesta = crear_partida(peticion(["J1", "J2"]))
         self.assertEqual(respuesta["partidaId"], "EX-002")
 
+    def test_busca_la_partida_anterior_del_par(self):
+        crear_partida(peticion(["J1", "J2"]))
+        crear_partida(peticion(["J1", "J3"]))
+        crear_partida(peticion(["J2", "J1"]))
+        self.assertEqual(almacen.partida_anterior(["J1", "J2"])["partidaId"], "EX-003")
+        self.assertEqual(almacen.partida_anterior(["J1", "J3"])["partidaId"], "EX-002")
+        self.assertIsNone(almacen.partida_anterior(["J2", "J3"]))
+
     def test_jugadores_repetidos(self):
         with self.assertRaises(ErrorApi) as error:
             crear_partida(peticion(["J1", "J1"]))

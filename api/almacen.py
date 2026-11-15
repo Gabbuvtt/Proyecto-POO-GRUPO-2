@@ -10,6 +10,15 @@ def buscar_partida(partida_id):
     return partidas.get(partida_id)
 
 
+def partida_anterior(jugadores):
+    # la ultima partida del mismo par, sin importar el orden
+    anterior = None
+    for partida in partidas.values():
+        if sorted(partida["jugadores"]) == sorted(jugadores):
+            anterior = partida
+    return anterior
+
+
 def contar_partidas():
     return len(partidas)
 

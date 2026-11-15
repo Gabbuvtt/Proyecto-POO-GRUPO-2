@@ -39,6 +39,22 @@ def es_candidato_valido(tablero, templos_pista):
     )
 
 
+def es_distinta(candidato, anterior):
+    # C, X y los dos fragmentos tienen que cambiar respecto a la partida anterior
+    if anterior is None:
+        return True
+    tablero = candidato["tablero"]
+    campamento = coordenada(posicion_campamento(tablero))
+    cofre = coordenada(buscar_casillas(tablero, TipoCasilla.COFRE)[0])
+    pistas_anteriores = list(anterior["pistas"].values())
+    return (
+        campamento != anterior["campamento"]
+        and cofre != anterior["cofre"]
+        and candidato["pistas"][0] != pistas_anteriores[0]
+        and candidato["pistas"][1] != pistas_anteriores[1]
+    )
+
+
 def armar_candidato(semilla, jugadores):
     # todo lo del mapa sale de la misma semilla para poder reproducirlo
     rng = random.Random(semilla)
@@ -121,11 +137,13 @@ def estado_inicial(orden, campamento):
     }
 
 
-def generar_partida(partida_id, jugadores):
+def generar_partida(partida_id, jugadores, anterior=None):
     for _ in range(MAX_CANDIDATOS):
         semilla = secrets.randbits(32)
         candidato = armar_candidato(semilla, jugadores)
         if not es_candidato_valido(candidato["tablero"], candidato["templosPista"]):
+            continue
+        if not es_distinta(candidato, anterior):
             continue
 
         contrasena = candidato["pistas"][0] + "-" + candidato["pistas"][1]
