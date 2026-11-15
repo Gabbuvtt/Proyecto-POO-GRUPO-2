@@ -38,17 +38,6 @@ public class AccionExplorar implements AccionJuego {
             return true;
         }
 
-        // Caso 2 Abrir el Cofre (X)
-        if (terreno == TipoDeTerreno.COFRE) {
-            if (!partida.tienenTodasLasPistas()) {
-                return false;
-            }
-
-            actual.sumarPuntos(ReglasDelJuego.getValorReliquiaEspecial());
-            partida.finalizarPartidaPorCofre();
-            return true;
-        }
-
         return false;
     }
 }
