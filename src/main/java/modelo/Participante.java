@@ -57,7 +57,7 @@ public class Participante {
         }
     }
 
-    // Saca todas las reliquias del inventario, las pasa a entregadas y suma sus puntos
+    // Saca todas las reliquias del inventario y las pasa a entregadas y suma sus puntos
     public int entregarReliquias() {
         ArrayList<Reliquia> sacadas = inventario.entregarTodas();
         int puntosGanados = 0;
@@ -70,5 +70,11 @@ public class Participante {
 
         this.puntos = this.puntos + puntosGanados;
         return puntosGanados;
+    }
+
+    public void sumarPuntos(int puntosExtra) {
+        if (puntosExtra > 0) {
+            this.puntos = this.puntos + puntosExtra;
+        }
     }
 }

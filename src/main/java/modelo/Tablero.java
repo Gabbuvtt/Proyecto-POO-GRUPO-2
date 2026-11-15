@@ -40,7 +40,7 @@ public class Tablero {
         }
     }
 
-    // Cambia el terreno de una casilla (ej. poner el Campamento en C3 o un Pantano en D1)
+    // Cambia el terreno de una casilla (poner el Campamento en C3 o un Pantano en D1)
     public void colocarTerreno(Coordenada coord, TipoDeTerreno tipo) {
         if (estaDentroDelTablero(coord)) {
             matriz[coord.getFila()][coord.getColumna()].setTipo(tipo);
