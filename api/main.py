@@ -2,7 +2,15 @@ from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from almacen import guardar_partida, jugador_existe, nuevo_partida_id, partida_anterior
+from almacen import (
+    buscar_partida,
+    buscar_solicitud,
+    guardar_partida,
+    guardar_solicitud,
+    jugador_existe,
+    nuevo_partida_id,
+    partida_anterior,
+)
 from modelos import Error, PartidaPublica, PeticionPartida
 from partidas import GeneracionFallida, generar_partida
 
@@ -73,10 +81,19 @@ def a_publica(partida):
     responses={
         400: {"model": Error, "description": "Jugadores repetidos o datos invalidos"},
         404: {"model": Error, "description": "Jugador inexistente"},
+        409: {"model": Error, "description": "requestId ya usado con otro cuerpo"},
         503: {"model": Error, "description": "No se pudo generar un tablero valido"},
     },
 )
 def crear_partida(peticion: PeticionPartida):
+    # mismo requestId: misma partida si el cuerpo es igual, 409 si cambia
+    cuerpo = peticion.model_dump()
+    solicitud = buscar_solicitud(peticion.requestId)
+    if solicitud is not None:
+        if solicitud["cuerpo"] != cuerpo:
+            raise ErrorApi(409, "REQUEST_ID_CONFLICTIVO", "El requestId ya se uso con otro cuerpo")
+        return a_publica(buscar_partida(solicitud["partidaId"]))
+
     validar_jugadores(peticion.jugadores)
     try:
         anterior = partida_anterior(peticion.jugadores)
@@ -84,6 +101,7 @@ def crear_partida(peticion: PeticionPartida):
     except GeneracionFallida:
         raise ErrorApi(503, "GENERACION_FALLIDA", "No se pudo generar un tablero valido")
     guardar_partida(partida)
+    guardar_solicitud(peticion.requestId, cuerpo, partida["partidaId"])
     return a_publica(partida)
 
 

@@ -8,14 +8,15 @@ from modelos import PartidaPublica, PeticionPartida
 from partidas import GeneracionFallida
 
 
-def peticion(jugadores):
-    return PeticionPartida(requestId="solicitud-001", jugadores=jugadores)
+def peticion(jugadores, request_id="solicitud-001"):
+    return PeticionPartida(requestId=request_id, jugadores=jugadores)
 
 
 class PruebasCrearPartida(unittest.TestCase):
 
     def setUp(self):
         almacen.partidas.clear()
+        almacen.solicitudes.clear()
 
     def test_crea_partida_publica(self):
         respuesta = crear_partida(peticion(["J1", "J2"]))
@@ -32,17 +33,36 @@ class PruebasCrearPartida(unittest.TestCase):
             self.assertNotIn(campo, respuesta)
 
     def test_numera_las_partidas(self):
-        crear_partida(peticion(["J1", "J2"]))
-        respuesta = crear_partida(peticion(["J1", "J2"]))
+        crear_partida(peticion(["J1", "J2"], "solicitud-001"))
+        respuesta = crear_partida(peticion(["J1", "J2"], "solicitud-002"))
         self.assertEqual(respuesta["partidaId"], "EX-002")
 
     def test_busca_la_partida_anterior_del_par(self):
-        crear_partida(peticion(["J1", "J2"]))
-        crear_partida(peticion(["J1", "J3"]))
-        crear_partida(peticion(["J2", "J1"]))
+        crear_partida(peticion(["J1", "J2"], "solicitud-001"))
+        crear_partida(peticion(["J1", "J3"], "solicitud-002"))
+        crear_partida(peticion(["J2", "J1"], "solicitud-003"))
         self.assertEqual(almacen.partida_anterior(["J1", "J2"])["partidaId"], "EX-003")
         self.assertEqual(almacen.partida_anterior(["J1", "J3"])["partidaId"], "EX-002")
         self.assertIsNone(almacen.partida_anterior(["J2", "J3"]))
+
+    def test_mismo_request_id_y_cuerpo_devuelve_la_misma(self):
+        primera = crear_partida(peticion(["J1", "J2"]))
+        segunda = crear_partida(peticion(["J1", "J2"]))
+        self.assertEqual(primera, segunda)
+        self.assertEqual(almacen.contar_partidas(), 1)
+
+    def test_mismo_request_id_con_otro_cuerpo(self):
+        crear_partida(peticion(["J1", "J2"]))
+        with self.assertRaises(ErrorApi) as error:
+            crear_partida(peticion(["J1", "J3"]))
+        self.assertEqual(error.exception.estado_http, 409)
+        self.assertEqual(almacen.contar_partidas(), 1)
+
+    def test_generacion_fallida_no_guarda_la_solicitud(self):
+        with mock.patch.object(main, "generar_partida", side_effect=GeneracionFallida()):
+            with self.assertRaises(ErrorApi):
+                crear_partida(peticion(["J1", "J2"]))
+        self.assertIsNone(almacen.buscar_solicitud("solicitud-001"))
 
     def test_jugadores_repetidos(self):
         with self.assertRaises(ErrorApi) as error:

@@ -1,9 +1,19 @@
 # guardado en memoria, se reemplaza cuando exista el guardado real
 partidas = {}
+#requestId - cuerpo de la peticion y partida que se creo con el
+solicitudes = {}
 
 
 def guardar_partida(partida):
     partidas[partida["partidaId"]] = partida
+
+
+def guardar_solicitud(request_id, cuerpo, partida_id):
+    solicitudes[request_id] = {"cuerpo": cuerpo, "partidaId": partida_id}
+
+
+def buscar_solicitud(request_id):
+    return solicitudes.get(request_id)
 
 
 def buscar_partida(partida_id):

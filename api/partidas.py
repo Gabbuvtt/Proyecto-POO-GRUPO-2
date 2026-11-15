@@ -56,7 +56,7 @@ def es_distinta(candidato, anterior):
 
 
 def armar_candidato(semilla, jugadores):
-    # todo lo del mapa sale de la misma semilla para poder reproducirlo
+    # el mapa completo sale de la misma semilla para poder reproducirlo
     rng = random.Random(semilla)
     tablero = generar_tablero(semilla)
     templos = buscar_casillas(tablero, TipoCasilla.TEMPLO)
