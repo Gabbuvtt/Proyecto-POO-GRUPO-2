@@ -3,9 +3,13 @@ package modelo;
 public class AccionExplorar implements AccionJuego {
 
     @Override
-    public boolean ejecutar(Partida partida) {
-        if (partida.getEstado() != EstadoDePartida.EN_CURSO || partida.getAccionesRestantes() < 1) {
-            return false;
+    public ResultadoAccion ejecutar(Partida partida) {
+        if (partida.getEstado() != EstadoDePartida.EN_CURSO) {
+            return ResultadoAccion.PARTIDA_FINALIZADA;
+        }
+
+        if (partida.getAccionesRestantes() < 1) {
+            return ResultadoAccion.SIN_ACCIONES;
         }
 
         Participante actual = partida.getTurnoActual();
@@ -16,7 +20,7 @@ public class AccionExplorar implements AccionJuego {
         // Caso 1 Explorar un Templo (T)
         if (terreno == TipoDeTerreno.TEMPLO) {
             if (partida.yaFueExplorado(pos)) {
-                return false;
+                return ResultadoAccion.TEMPLO_YA_EXPLORADO;
             }
 
             Reliquia reliquia = partida.obtenerReliquiaOculta(pos);
@@ -24,7 +28,7 @@ public class AccionExplorar implements AccionJuego {
                 // agregarreliquia ya verifica internamente con estaLleno() si cabe o no
                 boolean seAgrego = actual.getInventario().agregarReliquia(reliquia);
                 if (!seAgrego) {
-                    return false;
+                    return ResultadoAccion.INVENTARIO_LLENO;
                 }
             }
 
@@ -35,9 +39,9 @@ public class AccionExplorar implements AccionJuego {
 
             partida.marcarComoExplorado(pos);
             partida.consumirAcciones(1);
-            return true;
+            return ResultadoAccion.OK;
         }
 
-        return false;
+        return ResultadoAccion.NO_ES_TEMPLO;
     }
 }

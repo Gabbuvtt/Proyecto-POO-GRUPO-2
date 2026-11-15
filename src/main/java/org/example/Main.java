@@ -32,16 +32,16 @@ public class Main {
         System.out.println("Posición inicial: " + p1.getPosicion().getTexto() + " | Acciones: " + partida.getAccionesRestantes());
 
         // Accion 1 de Carlos: Moverse del Campamento (C3) al Templo (C2) -> Cuesta 1 acción
-        boolean mov1 = partida.ejecutarAccion(new AccionMover(templo1));
+        ResultadoAccion mov1 = partida.ejecutarAccion(new AccionMover(templo1));
         System.out.println("\n1. Carlos se mueve a C2 (Templo): " + mov1 + " | Acciones restantes: " + partida.getAccionesRestantes());
 
         // Accion 2 de Carlos: Explorar el Templo en C2 -> Cuesta 1 acción
-        boolean exp1 = partida.ejecutarAccion(new AccionExplorar());
+        ResultadoAccion exp1 = partida.ejecutarAccion(new AccionExplorar());
         System.out.println("2. Carlos explora C2: " + exp1 + " | Reliquias en mochila: " + p1.getInventario().getReliquias().size() + " | Pistas descubiertas: " + partida.getPistasDescubiertas().size());
         System.out.println("   Acciones restantes: " + partida.getAccionesRestantes());
 
         // Accion 3 de Carlos: Regresar al Campamento (C3) -> Cuesta 1 acción (Se queda en 0 acciones y cambia el turno a Ana)
-        boolean mov2 = partida.ejecutarAccion(new AccionMover(campamento));
+        ResultadoAccion mov2 = partida.ejecutarAccion(new AccionMover(campamento));
         System.out.println("3. Carlos vuelve al Campamento C3: " + mov2);
         System.out.println("-> ¡Cambio automático de turno! Ahora juega: " + partida.getTurnoActual().getJugador().getNombre() + " con " + partida.getAccionesRestantes() + " acciones.");
 
@@ -53,7 +53,7 @@ public class Main {
 
         // Ronda 2 - Turno de Carlos: Entrega la reliquia en el Campamento
         System.out.println("\n=== RONDA " + partida.getRondaActual() + " | Turno de: " + partida.getTurnoActual().getJugador().getNombre() + " ===");
-        boolean ent1 = partida.ejecutarAccion(new AccionEntregar());
+        ResultadoAccion ent1 = partida.ejecutarAccion(new AccionEntregar());
         System.out.println("6. Carlos entrega reliquias en el Campamento: " + ent1 + " | Puntos de Carlos: " + p1.getPuntos());
         System.out.println("Resultado parcial -> " + partida.obtenerGanador());
     }
