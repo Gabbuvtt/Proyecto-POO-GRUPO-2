@@ -1,5 +1,6 @@
 import random
 import secrets
+from enum import Enum
 
 from cofre import cifrar_cofre, descifrar_cofre
 from generador import (
@@ -18,6 +19,12 @@ from validaciones import (
 
 MAX_CANDIDATOS = 1000
 COFRE_ID = "COFRE-01"
+ACCIONES_POR_TURNO = 3
+
+
+class EstadoPartida(str, Enum):
+    EN_CURSO = "EN_CURSO"
+    FINALIZADA = "FINALIZADA"
 
 
 class GeneracionFallida(Exception):
@@ -86,6 +93,31 @@ def a_partida(partida_id, jugadores, candidato, paquete):
         "jugadores": list(jugadores),
         "orden": candidato["orden"],
         "posiciones": posiciones,
+        "estado": estado_inicial(candidato["orden"], campamento),
+    }
+
+
+def estado_inicial(orden, campamento):
+    # ronda 1, le toca al primero del orden y todos parten de C
+    jugadores = []
+    for jugador in orden:
+        jugadores.append({
+            "jugadorId": jugador,
+            "posicion": campamento,
+            "puntos": 0,
+            "inventario": [],
+            "entregadas": [],
+        })
+    return {
+        "estado": EstadoPartida.EN_CURSO.value,
+        "ronda": 1,
+        "indiceJugadorActual": 0,
+        "accionesRestantes": ACCIONES_POR_TURNO,
+        "jugadores": jugadores,
+        "templosExplorados": [],
+        "pistas": [],
+        "cofreAbierto": False,
+        "ganadores": [],
     }
 
 
