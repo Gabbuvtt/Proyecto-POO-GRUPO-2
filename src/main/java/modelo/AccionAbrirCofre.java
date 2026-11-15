@@ -15,17 +15,16 @@ public class AccionAbrirCofre implements AccionJuego {
     private static final Pattern FORMATO = Pattern.compile("[A-Z0-9]+(?:-[A-Z0-9]+)?");
     private static final int COSTO = 1;
     private static final String ID_ESPECIAL = "REL-ESPECIAL";
-    private static final int VALOR_ESPECIAL = 4;
 
     private PaqueteCofre paquete;
     private String contrasena;
     private ServicioCriptografico servicio;
 
-    /** Crea la accion con el paquete que el controlador pidio a la API y la contrasena escrita. */
-    public AccionAbrirCofre(PaqueteCofre paquete, String contrasena) {
+    /** Crea la accion con el paquete que el controlador pidio a la API, la contraseña escrita y el servicio que descifra. */
+    public AccionAbrirCofre(PaqueteCofre paquete, String contrasena, ServicioCriptografico servicio) {
         this.paquete = paquete;
         this.contrasena = contrasena;
-        this.servicio = new ServicioCriptografico();
+        this.servicio = servicio;
     }
 
     /** Intenta abrir el cofre; solo cobra si se llega a descifrar. */
@@ -82,7 +81,7 @@ public class AccionAbrirCofre implements AccionJuego {
         }
 
         partida.abrirCofre();
-        actual.getInventario().agregarReliquia(new Reliquia(ID_ESPECIAL, VALOR_ESPECIAL));
+        actual.getInventario().agregarReliquia(new Reliquia(ID_ESPECIAL, ReglasDelJuego.getValorReliquiaEspecial()));
         partida.consumirAcciones(COSTO);
         return ResultadoAccion.OK;
     }

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import servicio.PaqueteCofre;
+import servicio.ServicioCriptografico;
 
 /** CA06: abrir el cofre con el vector del Anexo B y revisar cuando cobra. */
 class CA06Test {
@@ -20,6 +21,7 @@ class CA06Test {
     private Partida partida;
     private Participante ana;
     private Participante luis;
+    private final ServicioCriptografico servicio = new ServicioCriptografico();
 
     // mapa del ejemplo: Ana y Luis parados en el cofre D2
     @BeforeEach
@@ -40,7 +42,7 @@ class CA06Test {
     }
 
     private ResultadoAccion abrir(String contrasena) {
-        return partida.ejecutarAccion(new AccionAbrirCofre(paquete(CIFRADO), contrasena));
+        return partida.ejecutarAccion(new AccionAbrirCofre(paquete(CIFRADO), contrasena, servicio));
     }
 
     @Test
@@ -82,7 +84,7 @@ class CA06Test {
 
     @Test
     void paqueteCorruptoNoCuesta() {
-        AccionAbrirCofre accion = new AccionAbrirCofre(paquete("%%no-es-base64%%"), "ORBITA-7392");
+        AccionAbrirCofre accion = new AccionAbrirCofre(paquete("%%no-es-base64%%"), "ORBITA-7392", servicio);
         assertEquals(ResultadoAccion.DATOS_CORRUPTOS, partida.ejecutarAccion(accion));
         assertEquals(3, partida.getAccionesRestantes());
         assertFalse(partida.estaCofreAbierto());
@@ -92,7 +94,7 @@ class CA06Test {
     void paqueteDeOtraPartidaNoCuesta() {
         PaqueteCofre otro = new PaqueteCofre("OTRA-01", "COFRE-01", "AES/GCM/NoPadding",
                 "PBKDF2WithHmacSHA256", 100000, 256, SAL, NONCE, 128, "RVgtUkVELTAxfENPRlJFLTAx", CIFRADO);
-        assertEquals(ResultadoAccion.DATOS_CORRUPTOS, partida.ejecutarAccion(new AccionAbrirCofre(otro, "ORBITA-7392")));
+        assertEquals(ResultadoAccion.DATOS_CORRUPTOS, partida.ejecutarAccion(new AccionAbrirCofre(otro, "ORBITA-7392", servicio)));
         assertEquals(3, partida.getAccionesRestantes());
     }
 
@@ -113,7 +115,7 @@ class CA06Test {
     @Test
     void validacionesPreviasNoCuestan() {
         Partida sinPistas = new Partida("EX-RED-01", partida.getTablero(), ana, luis);
-        AccionAbrirCofre accion = new AccionAbrirCofre(paquete(CIFRADO), "ORBITA-7392");
+        AccionAbrirCofre accion = new AccionAbrirCofre(paquete(CIFRADO), "ORBITA-7392", servicio);
         assertEquals(ResultadoAccion.FALTAN_PISTAS, sinPistas.ejecutarAccion(accion));
 
         ana.getInventario().agregarReliquia(new Reliquia("REL-01", 1));
