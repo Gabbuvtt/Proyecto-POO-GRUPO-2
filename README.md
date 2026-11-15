@@ -5,6 +5,13 @@ Proyecto de Programación Orientada a Objetos (UCAB), Fase 1. Consta de dos part
 - `api/`: API en Python (FastAPI) que genera las partidas, los templos, las pistas y el cofre cifrado.
 - `src/`: aplicación Java de consola que contiene las reglas del juego y abre el cofre.
 
+## Integrantes
+
+- Gianfranco Cala
+- Gabriel Mejía
+- Sebastián Serrano
+- Sebastián González
+
 ## Requisitos
 
 - Python 3.10 o superior.
