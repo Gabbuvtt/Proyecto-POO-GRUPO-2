@@ -1,7 +1,9 @@
 package modelo;
 
+/** Accion de explorar un templo (T) para recolectar reliquias y descubrir pistas. */
 public class AccionExplorar implements AccionJuego {
 
+    /** Explora el templo en la posicion actual si no ha sido explorado y hay espacio en el inventario. */
     @Override
     public ResultadoAccion ejecutar(Partida partida) {
         if (partida.getEstado() != EstadoDePartida.EN_CURSO) {
@@ -17,7 +19,6 @@ public class AccionExplorar implements AccionJuego {
         Casilla casillaActual = partida.getTablero().obtenerCasilla(pos);
         TipoDeTerreno terreno = casillaActual.getTipo();
 
-        // Caso 1 Explorar un Templo (T)
         if (terreno == TipoDeTerreno.TEMPLO) {
             if (partida.yaFueExplorado(pos)) {
                 return ResultadoAccion.TEMPLO_YA_EXPLORADO;
@@ -25,7 +26,6 @@ public class AccionExplorar implements AccionJuego {
 
             Reliquia reliquia = partida.obtenerReliquiaOculta(pos);
             if (reliquia != null) {
-                // agregarreliquia ya verifica internamente con estaLleno() si cabe o no
                 boolean seAgrego = actual.getInventario().agregarReliquia(reliquia);
                 if (!seAgrego) {
                     return ResultadoAccion.INVENTARIO_LLENO;
