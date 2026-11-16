@@ -72,7 +72,21 @@ Pendiente.
 
 ## Ejecutar el juego Java
 
-Pendiente.
+Requisitos: Java 22 (JDK) y Maven 3.
+
+1. Levantar primero la API (ver la sección anterior). El juego la necesita corriendo en `http://localhost:8000`.
+
+2. Desde la raíz del proyecto, compilar y generar el jar (también corre las pruebas):
+
+   ```
+   mvn package
+   ```
+
+3. Ejecutar el juego:
+
+   ```
+   java -jar target/expedicion-isla-reliquias-1.0-SNAPSHOT.jar
+   ```
 
 ## Pruebas
 
