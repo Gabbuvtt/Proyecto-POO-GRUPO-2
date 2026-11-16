@@ -214,6 +214,28 @@ public class VistaConsola {
         System.out.println("Valor: " + ReglasDelJuego.VALOR_RELIQUIA_ESPECIAL + " | Acciones restantes: " + accionesRestantes);
         System.out.println("Recuerde entregarla en el campamento.");
     }
+
+    /** Pantalla final: puntos, reliquias entregadas y tiempo de cada jugador, y quien gano. */
+    public void mostrarFinDePartida(Partida partida) {
+        System.out.println();
+        System.out.println("FIN DE LA PARTIDA");
+        System.out.println(resumenFinal(partida.getParticipante1()));
+        System.out.println(resumenFinal(partida.getParticipante2()));
+        ArrayList<Participante> ganadores = partida.obtenerGanadores();
+        if (ganadores.size() == 1) {
+            System.out.println("Ganador: " + ganadores.get(0).getJugador().getNombre());
+        } else {
+            System.out.println("Victoria compartida.");
+        }
+    }
+
+    /** Una linea con el resultado final de un participante. */
+    private String resumenFinal(Participante participante) {
+        return participante.getJugador().getNombre() + ": " + participante.getPuntos() + " puntos, "
+                + participante.getEntregadas().size() + " reliquias entregadas, "
+                + participante.getSegundosConsumidos() + " s de juego";
+    }
+
     /**
      * Dibuja el tablero con las letras de las columnas arriba y los numeros de fila a la izquierda.
      * Sobre cada casilla marca con 1 y 2 donde estan los participantes.

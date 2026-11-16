@@ -133,4 +133,20 @@ class PantallaTurnoTest {
         assertTrue(texto.contains("No se pudo autenticar el archivo."));
         assertTrue(texto.contains("Acciones restantes: 2."));
     }
+
+    @Test
+    void pantallaFinalMuestraPuntosTiempoYGanador() {
+        Partida partida = partidaEjemplo();
+        partida.getParticipante1().entregarReliquias();
+        partida.getParticipante1().sumarSegundos(95);
+        partida.getParticipante2().sumarSegundos(80);
+
+        new VistaConsola(new Scanner("")).mostrarFinDePartida(partida);
+
+        String texto = salida();
+        assertTrue(texto.contains("FIN DE LA PARTIDA"));
+        assertTrue(texto.contains("Ana: 3 puntos, 1 reliquias entregadas, 95 s de juego"));
+        assertTrue(texto.contains("Luis: 0 puntos, 0 reliquias entregadas, 80 s de juego"));
+        assertTrue(texto.contains("Ganador: Ana"));
+    }
 }
