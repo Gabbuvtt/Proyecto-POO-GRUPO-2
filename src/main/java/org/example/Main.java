@@ -55,6 +55,6 @@ public class Main {
         System.out.println("\n=== RONDA " + partida.getRondaActual() + " | Turno de: " + partida.getTurnoActual().getJugador().getNombre() + " ===");
         ResultadoAccion ent1 = partida.ejecutarAccion(new AccionEntregar());
         System.out.println("6. Carlos entrega reliquias en el Campamento: " + ent1 + " | Puntos de Carlos: " + p1.getPuntos());
-        System.out.println("Resultado parcial -> " + partida.obtenerGanador());
+        System.out.println("Resultado parcial -> " + partida.obtenerGanadores());
     }
 }
