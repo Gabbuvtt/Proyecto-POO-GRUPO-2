@@ -95,9 +95,9 @@ public class Partida {
         return estado;
     }
 
-    /** Devuelve la lista de pistas descubiertas por los jugadores. */
+    /** Devuelve una copia de las pistas descubiertas por los jugadores. */
     public ArrayList<Pista> getPistasDescubiertas() {
-        return pistasDescubiertas;
+        return new ArrayList<>(pistasDescubiertas);
     }
 
     /** Registra una reliquia oculta en la coordenada indicada del mapa. */

@@ -40,8 +40,8 @@ public class Inventario {
         return entregadas;
     }
 
-    /** Devuelve la lista de reliquias que estan actualmente en el inventario. */
+    /** Devuelve una copia de las reliquias que estan actualmente en el inventario. */
     public ArrayList<Reliquia> getReliquias() {
-        return reliquias;
+        return new ArrayList<>(reliquias);
     }
 }
