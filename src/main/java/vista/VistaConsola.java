@@ -44,15 +44,19 @@ public class VistaConsola {
         mostrarMensaje(mensajes.describir(resultado));
     }
 
-    /** Muestra un texto y devuelve la linea que escribio el usuario, sin espacios en los extremos. */
-    public String leerTexto(String mensaje) {
+    /** Muestra un texto y devuelve la linea tal cual la escribio el usuario, sin recortar espacios. */
+    public String leerLineaSinRecortar(String mensaje) {
         System.out.print(mensaje);
         if (!entrada.hasNextLine()) {
             throw new IllegalStateException("No hay mas datos de entrada.");
         }
-        return entrada.nextLine().trim();
+        return entrada.nextLine();
     }
 
+    /** Muestra un texto y devuelve la linea que escribio el usuario, sin espacios en los extremos. */
+    public String leerTexto(String mensaje) {
+        return leerLineaSinRecortar(mensaje).trim();
+    }
     /**
      * Pide un numero entero entre minimo y maximo. Si el usuario escribe letras, un numero fuera de
      * rango o nada, avisa y vuelve a preguntar. Asi el programa no se cae por una entrada mala.
@@ -184,6 +188,31 @@ public class VistaConsola {
             texto.append(reliquias.get(i).getReliquiaId()).append(", valor ").append(reliquias.get(i).getValor());
         }
         return texto.toString();
+    }
+    /** Muestra el resultado de una accion y cuantos puntos de accion le quedan al jugador. */
+    public void mostrarResultado(ResultadoAccion resultado, int accionesRestantes) {
+        mostrarResultado(resultado);
+        System.out.println("Acciones restantes: " + accionesRestantes + ".");
+    }
+
+    /**
+     * Pantalla del cofre: muestra las pistas y pide la contrasena tal cual la escribe el jugador
+     */
+    public String pedirContrasenaCofre(Partida partida) {
+        mostrarPistas(partida);
+        Participante actual = partida.getTurnoActual();
+        String estadoCofre = partida.estaCofreAbierto() ? "Cofre abierto" : "Cofre cerrado";
+        System.out.println();
+        System.out.println(actual.getJugador().getNombre() + " en " + actual.getPosicion().getTexto()
+                + " | " + estadoCofre + " | Acciones: " + partida.getAccionesRestantes());
+        return leerLineaSinRecortar("Contraseña: ");
+    }
+
+    /** Informa que el cofre se abrio y que la reliquia especial todavia hay que entregarla. */
+    public void mostrarCofreAbierto(int accionesRestantes) {
+        System.out.println("Cofre abierto. REL-ESPECIAL incorporada al inventario.");
+        System.out.println("Valor: " + ReglasDelJuego.VALOR_RELIQUIA_ESPECIAL + " | Acciones restantes: " + accionesRestantes);
+        System.out.println("Recuerde entregarla en el campamento.");
     }
     /**
      * Dibuja el tablero con las letras de las columnas arriba y los numeros de fila a la izquierda.

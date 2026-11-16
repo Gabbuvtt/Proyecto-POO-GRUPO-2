@@ -18,7 +18,7 @@ public class MensajesResultado {
             case SIN_ACCIONES -> "No te alcanzan los puntos de acción para eso.";
             case NO_ES_TEMPLO -> "Aquí no hay un templo para explorar.";
             case TEMPLO_YA_EXPLORADO -> "Explorado y vacío.";
-            case INVENTARIO_LLENO -> "Regrese al campamento para entregar antes de explorar.";
+            case INVENTARIO_LLENO -> "Inventario lleno. Regrese al campamento para entregar antes de explorar o abrir el cofre.";
             case NO_ESTA_EN_CAMPAMENTO -> "Debes estar en el campamento para entregar.";
             case INVENTARIO_VACIO -> "No llevas reliquias para entregar.";
             case NO_ESTA_EN_COFRE -> "Debes estar en el cofre (X) para intentar abrirlo.";

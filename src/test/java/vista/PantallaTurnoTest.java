@@ -6,6 +6,7 @@ import modelo.Participante;
 import modelo.Partida;
 import modelo.Pista;
 import modelo.Reliquia;
+import modelo.ResultadoAccion;
 import modelo.Tablero;
 import modelo.TipoDeTerreno;
 import org.junit.jupiter.api.AfterEach;
@@ -92,5 +93,44 @@ class PantallaTurnoTest {
     void coordenadaDestinoSeLeeSinImportarMayusculasNiEspacios() {
         Coordenada destino = new VistaConsola(new Scanner(" d4 \n")).pedirCoordenadaDestino();
         assertEquals("D4", destino.getTexto());
+    }
+
+    @Test
+    void contrasenaDelCofreSeLeeTalCualSinQuitarEspacios() {
+        VistaConsola vista = new VistaConsola(new Scanner(" ORBITA-7392 \n"));
+        assertEquals(" ORBITA-7392 ", vista.pedirContrasenaCofre(partidaEjemplo()));
+    }
+
+    @Test
+    void pantallaDelCofreMuestraPistasYEstadoPeroNoLaContrasenaUnida() {
+        Partida partida = partidaEjemplo();
+        partida.agregarPistaDescubierta(new Pista(1, "ORBITA"));
+        partida.agregarPistaDescubierta(new Pista(2, "7392"));
+
+        new VistaConsola(new Scanner("x\n")).pedirContrasenaCofre(partida);
+
+        String texto = salida();
+        assertTrue(texto.contains("Pista 1: ORBITA | Pista 2: 7392"));
+        assertTrue(texto.contains("Ana en C3 | Cofre cerrado | Acciones: 3"));
+        assertFalse(texto.contains("ORBITA-7392"));
+    }
+
+    @Test
+    void cofreAbiertoAvisaValorYQueHayQueEntregarla() {
+        new VistaConsola(new Scanner("")).mostrarCofreAbierto(1);
+
+        String texto = salida();
+        assertTrue(texto.contains("Cofre abierto. REL-ESPECIAL incorporada al inventario."));
+        assertTrue(texto.contains("Valor: 4 | Acciones restantes: 1"));
+        assertTrue(texto.contains("Recuerde entregarla en el campamento."));
+    }
+
+    @Test
+    void resultadoFallidoMuestraElMensajeYLasAccionesRestantes() {
+        new VistaConsola(new Scanner("")).mostrarResultado(ResultadoAccion.FALLO_AUTENTICACION, 2);
+
+        String texto = salida();
+        assertTrue(texto.contains("No se pudo autenticar el archivo."));
+        assertTrue(texto.contains("Acciones restantes: 2."));
     }
 }
