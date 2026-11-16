@@ -68,6 +68,18 @@ public class Participante {
         }
     }
 
+    /** Reemplaza los puntos y las reliquias entregadas con los de una partida guardada. */
+    public void restaurarPuntosYEntregadas(int puntos, ArrayList<Reliquia> entregadas) {
+        if (puntos < 0) {
+            throw new IllegalArgumentException("Los puntos no pueden ser negativos");
+        }
+        if (entregadas == null) {
+            throw new IllegalArgumentException("La lista de entregadas no puede ser nula");
+        }
+        this.puntos = puntos;
+        this.entregadas = new ArrayList<>(entregadas);
+    }
+
     /** Pasa todas las reliquias del inventario a la lista de entregadas y suma su valor al puntaje. */
     public int entregarReliquias() {
         ArrayList<Reliquia> sacadas = inventario.entregarTodas();

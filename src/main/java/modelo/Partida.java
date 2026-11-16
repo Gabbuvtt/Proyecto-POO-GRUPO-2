@@ -100,6 +100,46 @@ public class Partida {
         return new ArrayList<>(pistasDescubiertas);
     }
 
+    /** Devuelve una copia de las coordenadas de los templos ya explorados. */
+    public ArrayList<String> getTemplosExplorados() {
+        return new ArrayList<>(templosExplorados);
+    }
+
+    /** Devuelve 0 si el turno es de participante1 o 1 si es de participante2. */
+    public int getIndiceJugadorActual() {
+        if (turnoActual == participante1) {
+            return 0;
+        }
+        return 1;
+    }
+
+    /** Deja la ronda, el turno, las acciones, el estado y el cofre como estaban en la partida guardada. */
+    public void restaurarEstado(int ronda, int indiceJugadorActual, int accionesRestantes,
+                                EstadoDePartida estado, boolean cofreAbierto) {
+        if (ronda < 1 || ronda > ReglasDelJuego.MAX_RONDAS) {
+            throw new IllegalArgumentException("La ronda debe estar entre 1 y " + ReglasDelJuego.MAX_RONDAS);
+        }
+        if (indiceJugadorActual != 0 && indiceJugadorActual != 1) {
+            throw new IllegalArgumentException("El indice del jugador actual debe ser 0 o 1");
+        }
+        if (accionesRestantes < 0 || accionesRestantes > ReglasDelJuego.ACCIONES_POR_TURNO) {
+            throw new IllegalArgumentException("Las acciones restantes deben estar entre 0 y " + ReglasDelJuego.ACCIONES_POR_TURNO);
+        }
+        if (estado == null) {
+            throw new IllegalArgumentException("El estado no puede ser nulo");
+        }
+
+        this.rondaActual = ronda;
+        if (indiceJugadorActual == 0) {
+            this.turnoActual = participante1;
+        } else {
+            this.turnoActual = participante2;
+        }
+        this.accionesRestantes = accionesRestantes;
+        this.estado = estado;
+        this.cofreAbierto = cofreAbierto;
+    }
+
     /** Registra una reliquia oculta en la coordenada indicada del mapa. */
     public void esconderReliquia(Coordenada coord, Reliquia reliquia) {
         reliquiasOcultas.put(coord.getTexto(), reliquia);
