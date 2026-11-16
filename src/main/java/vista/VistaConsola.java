@@ -2,10 +2,15 @@ package vista;
 
 import modelo.Casilla;
 import modelo.Coordenada;
-import modelo.ResultadoAccion;
 import modelo.Participante;
+import modelo.Partida;
+import modelo.Pista;
+import modelo.ReglasDelJuego;
+import modelo.Reliquia;
+import modelo.ResultadoAccion;
 import modelo.Tablero;
 
+import java.util.ArrayList;
 import java.util.Scanner;
 
 /** Muestra por consola las pantallas del juego. Solo imprime y lee: no decide nada de las reglas. */
@@ -105,6 +110,81 @@ public class VistaConsola {
         System.out.println("Jugador creado: " + jugadorId);
     }
 
+    /** Muestra la cabecera del turno: partida, ronda, jugador, posicion, puntos, acciones e inventario. */
+    public void mostrarEstadoTurno(Partida partida) {
+        Participante actual = partida.getTurnoActual();
+        System.out.println();
+        System.out.println(partida.getPartidaId() + " | Ronda " + partida.getRondaActual()
+                + " de " + ReglasDelJuego.MAX_RONDAS);
+        System.out.println(actual.getJugador().getNombre() + " | Posición: " + actual.getPosicion().getTexto()
+                + " | Puntos: " + actual.getPuntos() + " | Acciones: " + partida.getAccionesRestantes());
+        System.out.println("Inventario: " + describirInventario(actual));
+    }
+
+    /** Muestra el menu del turno y devuelve la opcion elegida (0 a 7). */
+    public int pedirOpcionTurno() {
+        System.out.println();
+        System.out.println("1. Mover");
+        System.out.println("2. Explorar templo");
+        System.out.println("3. Entregar reliquias");
+        System.out.println("4. Abrir cofre");
+        System.out.println("5. Consultar tablero, inventario y pistas");
+        System.out.println("6. Guardar");
+        System.out.println("7. Terminar turno");
+        System.out.println("0. Guardar y salir");
+        return leerEntero("Opción: ", 0, 7);
+    }
+
+    /** Pide la casilla destino. Puede ser invalida: el modelo la rechaza con FUERA_DEL_MAPA. */
+    public Coordenada pedirCoordenadaDestino() {
+        return new Coordenada(leerTexto("Destino: "));
+    }
+
+    /** Pantalla de consulta (no cuesta acciones): tablero, inventario del turno y pistas compartidas. */
+    public void mostrarConsulta(Partida partida) {
+        Participante p1 = partida.getParticipante1();
+        Participante p2 = partida.getParticipante2();
+        System.out.println();
+        mostrarTablero(partida.getTablero(), p1, p2);
+        System.out.println("1 = " + p1.getJugador().getNombre() + " | 2 = " + p2.getJugador().getNombre());
+        System.out.println("C campamento, S sendero, P pantano, T templo, X cofre");
+        System.out.println("Inventario: " + describirInventario(partida.getTurnoActual()));
+        mostrarPistas(partida);
+    }
+
+    /** Muestra los fragmentos de pista conocidos, SIN unirlos: el jugador arma la contrasena. */
+    public void mostrarPistas(Partida partida) {
+        System.out.println();
+        System.out.println("PISTAS COMPARTIDAS");
+        System.out.println("Pista 1: " + fragmentoDePista(partida, 1) + " | Pista 2: " + fragmentoDePista(partida, 2));
+        System.out.println("Regla: unir pista 1, guion y pista 2.");
+    }
+
+    /** Devuelve el fragmento de la pista con ese indice, o "(sin descubrir)" si aun no se conoce. */
+    private String fragmentoDePista(Partida partida, int indice) {
+        for (Pista pista : partida.getPistasDescubiertas()) {
+            if (pista.getIndice() == indice) {
+                return pista.getFragmento();
+            }
+        }
+        return "(sin descubrir)";
+    }
+
+    /** Describe el inventario de un participante, por ejemplo "REL-01, valor 3", o "vacío". */
+    private String describirInventario(Participante participante) {
+        ArrayList<Reliquia> reliquias = participante.getInventario().getReliquias();
+        if (reliquias.isEmpty()) {
+            return "vacío";
+        }
+        StringBuilder texto = new StringBuilder();
+        for (int i = 0; i < reliquias.size(); i++) {
+            if (i > 0) {
+                texto.append("; ");
+            }
+            texto.append(reliquias.get(i).getReliquiaId()).append(", valor ").append(reliquias.get(i).getValor());
+        }
+        return texto.toString();
+    }
     /**
      * Dibuja el tablero con las letras de las columnas arriba y los numeros de fila a la izquierda.
      * Sobre cada casilla marca con 1 y 2 donde estan los participantes.
