@@ -32,4 +32,12 @@ class VistaConsolaTest {
         VistaConsola vista = new VistaConsola(new Scanner("abc\n"));
         assertThrows(IllegalStateException.class, () -> vista.leerEntero("n: ", 1, 7));
     }
+
+    @Test
+    void registroRepiteLasPreguntasHastaQueNombreYAliasSeanValidos() {
+        VistaConsola vista = new VistaConsola(new Scanner("\nAna Pérez\nab\nana ucab\nana_ucab\n"));
+        DatosRegistro datos = vista.pedirDatosRegistro();
+        assertEquals("Ana Pérez", datos.nombre());
+        assertEquals("ana_ucab", datos.alias());
+    }
 }

@@ -2,6 +2,7 @@ package vista;
 
 import modelo.Casilla;
 import modelo.Coordenada;
+import modelo.ResultadoAccion;
 import modelo.Participante;
 import modelo.Tablero;
 
@@ -11,6 +12,8 @@ import java.util.Scanner;
 public class VistaConsola {
 
     private final Scanner entrada;
+    private final ValidadorEntrada validador = new ValidadorEntrada();
+    private final MensajesResultado mensajes = new MensajesResultado();
 
     /** Crea la vista leyendo del teclado. */
     public VistaConsola() {
@@ -31,6 +34,10 @@ public class VistaConsola {
     public void mostrarError(String mensaje) {
         System.out.println("Error: " + mensaje);
     }
+    /** Muestra al ugador el resultado de haber intentado una accion. */
+    public void mostrarResultado(ResultadoAccion resultado) {
+        mostrarMensaje(mensajes.describir(resultado));
+    }
 
     /** Muestra un texto y devuelve la linea que escribio el usuario, sin espacios en los extremos. */
     public String leerTexto(String mensaje) {
@@ -41,6 +48,10 @@ public class VistaConsola {
         return entrada.nextLine().trim();
     }
 
+    /**
+     * Pide un numero entero entre minimo y maximo. Si el usuario escribe letras, un numero fuera de
+     * rango o nada, avisa y vuelve a preguntar. Asi el programa no se cae por una entrada mala.
+     */
     public int leerEntero(String mensaje, int minimo, int maximo) {
         while (true) {
             String texto = leerTexto(mensaje);
@@ -69,6 +80,35 @@ public class VistaConsola {
         return leerEntero("Opción: ", 0, 5);
     }
 
+    /** Pide nombre y alias repitiendo cada pregunta hasta que cumplan las reglas del enunciado. */
+    public DatosRegistro pedirDatosRegistro() {
+        System.out.println();
+        System.out.println("Registro");
+
+        String nombre = leerTexto("Nombre: ");
+        while (!validador.esNombreValido(nombre)) {
+            mostrarError("el nombre debe tener entre 1 y 80 caracteres.");
+            nombre = leerTexto("Nombre: ");
+        }
+
+        String alias = leerTexto("Alias: ");
+        while (!validador.esAliasValido(alias)) {
+            mostrarError("el alias debe tener de 3 a 20 caracteres: letras, numeros, guion o guion bajo.");
+            alias = leerTexto("Alias: ");
+        }
+
+        return new DatosRegistro(nombre, alias);
+    }
+
+    /** Informa que el jugador fue creado y cual es su identificador. */
+    public void mostrarJugadorCreado(String jugadorId) {
+        System.out.println("Jugador creado: " + jugadorId);
+    }
+
+    /**
+     * Dibuja el tablero con las letras de las columnas arriba y los numeros de fila a la izquierda.
+     * Sobre cada casilla marca con 1 y 2 donde estan los participantes.
+     */
     public void mostrarTablero(Tablero tablero, Participante p1, Participante p2) {
         StringBuilder texto = new StringBuilder();
 
