@@ -51,9 +51,9 @@ public class Participante {
         return inventario;
     }
 
-    /** Devuelve la lista de todas las reliquias entregadas en el campamento. */
+    /** Devuelve una copia de las reliquias entregadas en el campamento. */
     public ArrayList<Reliquia> getEntregadas() {
-        return entregadas;
+        return new ArrayList<>(entregadas);
     }
 
     /** Devuelve el total de segundos consumidos por el participante en sus turnos. */
