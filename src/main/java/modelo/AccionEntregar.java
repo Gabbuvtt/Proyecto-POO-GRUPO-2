@@ -1,7 +1,9 @@
 package modelo;
 
+/** Accion de entregar todas las reliquias del inventario en el campamento (C). */
 public class AccionEntregar implements AccionJuego {
 
+    /** Ejecuta la entrega de reliquias si el participante esta en el campamento y su inventario no esta vacio. */
     @Override
     public ResultadoAccion ejecutar(Partida partida) {
         if (partida.getEstado() != EstadoDePartida.EN_CURSO) {
