@@ -40,19 +40,3 @@ public class ValidadorEntrada {
         }
         return contrasena.toUpperCase(Locale.ROOT);
     }
-
-    /**
-     * Indica si la contrasena tiene formato admisible: de 4 a 20 caracteres con el patron
-     */
-    public boolean esFormatoContrasenaValido(String contrasena) {
-        String normalizada = normalizarContrasena(contrasena);
-        if (normalizada == null) {
-            return false;
-        }
-        int largo = normalizada.length();
-        if (largo < LARGO_MINIMO_CONTRASENA || largo > LARGO_MAXIMO_CONTRASENA) {
-            return false;
-        }
-        return PATRON_CONTRASENA.matcher(normalizada).matches();
-    }
-}
