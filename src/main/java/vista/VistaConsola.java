@@ -229,11 +229,12 @@ public class VistaConsola {
         }
     }
 
-    /** Una linea con el resultado final de un participante. */
+    /** Una linea con el resultado final de un participante, incluido lo que le quedo en el inventario. */
     private String resumenFinal(Participante participante) {
         return participante.getJugador().getNombre() + ": " + participante.getPuntos() + " puntos, "
                 + participante.getEntregadas().size() + " reliquias entregadas, "
-                + participante.getSegundosConsumidos() + " s de juego";
+                + participante.getSegundosConsumidos() + " s de juego"
+                + " | Inventario final: " + describirInventario(participante);
     }
 
     /**
