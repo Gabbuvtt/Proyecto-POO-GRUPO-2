@@ -391,6 +391,12 @@ public class RepositorioPartidas implements AlmacenPartida {
 
         jugador.put("puntos", participante.getPuntos());
 
+        // tiempo acumulado en sus turnos
+        jugador.put(
+                "segundosConsumidos",
+                participante.getSegundosConsumidos()
+        );
+
         agregarReliquias(
                 jugador.putArray("inventario"),
                 participante.getInventario().getReliquias()
