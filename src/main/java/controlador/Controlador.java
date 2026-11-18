@@ -414,9 +414,7 @@ public class Controlador {
             vista.mostrarResultado(resultado, restantes);
         }
 
-        if (turnoCerrado) {
-            cerrarTurno(partida, actor);
-        }
+        despuesDeAccion(partida, actor, resultado, turnoCerrado);
     }
 
     /**
@@ -439,9 +437,7 @@ public class Controlador {
                         : partida.getAccionesRestantes()
         );
 
-        if (turnoCerrado) {
-            cerrarTurno(partida, actor);
-        }
+        despuesDeAccion(partida, actor, resultado, turnoCerrado);
     }
 
     /**
@@ -566,9 +562,7 @@ public class Controlador {
             );
         }
 
-        if (turnoCerrado) {
-            cerrarTurno(partida, actor);
-        }
+        despuesDeAccion(partida, actor, resultado, turnoCerrado);
     }
 
     /** Termina el turno voluntariamente. */
@@ -669,6 +663,40 @@ public class Controlador {
                         + " de nuevo para seguir desde la version de la API."
         );
         return true;
+    }
+
+    /**
+     * Despues de una accion cierra el turno si se acabo.
+     * Si no, guarda solo cuando la accion cambio el estado.
+     */
+    private void despuesDeAccion(
+            Partida partida,
+            Participante actor,
+            ResultadoAccion resultado,
+            boolean turnoCerrado) {
+
+        if (turnoCerrado) {
+            cerrarTurno(partida, actor);
+            return;
+        }
+
+        // un fallo de contrasena tambien cobra, asi que se guarda
+        boolean cambioElEstado = resultado == ResultadoAccion.OK
+                || resultado == ResultadoAccion.FALLO_AUTENTICACION;
+
+        if (!cambioElEstado) {
+            return;
+        }
+
+        sumarTiempoDelTurno(actor);
+
+        if (!intentarGuardar(partida)) {
+            vista.mostrarError(
+                    "No se pudo guardar la accion. "
+                            + "No podras continuar hasta "
+                            + "reintentar el guardado."
+            );
+        }
     }
 
     /**

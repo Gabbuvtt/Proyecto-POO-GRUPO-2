@@ -144,7 +144,7 @@ Una partida `EN_CURSO` sigue exactamente donde se guardó: misma ronda, mismo ju
 0. Guardar y salir
 ```
 
-La partida se guarda sola al cerrar cada turno. Si un guardado falla, se bloquean las acciones hasta reintentar con `6` o `0`, y `0` solo sale cuando la API confirma el guardado. La excepción es un conflicto de versiones (`409`, otro proceso guardó la partida antes): ahí `0` vuelve al menú principal sin guardar, avisando que se pierden los cambios desde el último guardado. El tiempo de cada turno se mide en segundos y se envía en el campo `segundosConsumidos` de cada jugador.
+La partida se guarda sola después de cada acción que cambia el estado (moverse, explorar, entregar o un intento de cofre que cobra) y al cerrar cada turno. Las acciones rechazadas no guardan porque no cambian nada. Si un guardado falla, se bloquean las acciones hasta reintentar con `6` o `0`, y `0` solo sale cuando la API confirma el guardado. La excepción es un conflicto de versiones (`409`, otro proceso guardó la partida antes): ahí `0` vuelve al menú principal sin guardar, avisando que se pierden los cambios desde el último guardado. El tiempo de cada turno se mide en segundos y se envía en el campo `segundosConsumidos` de cada jugador.
 
 ## Pruebas
 

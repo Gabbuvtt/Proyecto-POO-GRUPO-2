@@ -208,7 +208,7 @@ class ControladorTest {
         controlador.jugar(partida);
 
         assertSame(partida.getParticipante2(), partida.getTurnoActual());
-        assertEquals(2, almacen.guardados); // cierre de turno + guardar y salir
+        assertEquals(4, almacen.guardados); // 2 tras los primeros movimientos + cierre de turno + guardar y salir
         assertTrue(salida().contains("Acciones restantes: 0."));
     }
 
@@ -272,6 +272,54 @@ class ControladorTest {
         String texto = salida();
         assertTrue(texto.contains("Encontraste REL-01, valor 2."));
         assertTrue(texto.contains("Pista 1 descubierta: ORBITA"));
+    }
+
+    @Test
+    void cadaAccionQueCambiaElEstadoSeGuardaSola() {
+        Partida partida = partidaNueva();
+        // mueve a C2 y sale sin guardar a mano: el movimiento ya quedo guardado
+        Controlador controlador = controlador("1\nC2\n");
+        try {
+            controlador.jugar(partida);
+        } catch (IllegalStateException e) {
+            // se acabaron las teclas
+        }
+
+        assertEquals(1, almacen.guardados);
+        assertEquals(2, partida.getAccionesRestantes());
+    }
+
+    @Test
+    void unaAccionRechazadaNoGuarda() {
+        Partida partida = partidaNueva();
+        // D4 queda en diagonal desde C3
+        Controlador controlador = controlador("1\nD4\n");
+        try {
+            controlador.jugar(partida);
+        } catch (IllegalStateException e) {
+            // se acabaron las teclas
+        }
+
+        assertEquals(0, almacen.guardados);
+        assertEquals(3, partida.getAccionesRestantes());
+    }
+
+    @Test
+    void siFallaElGuardadoTrasUnaAccionSeBloqueaElJuego() {
+        almacen.fallar = true;
+        Partida partida = partidaNueva();
+        // mueve (falla el guardado) e intenta mover otra vez
+        Controlador controlador = controlador("1\nC2\n1\nC1\n");
+        try {
+            controlador.jugar(partida);
+        } catch (IllegalStateException e) {
+            // se acabaron las teclas
+        }
+
+        String texto = salida();
+        assertTrue(texto.contains("No se pudo guardar la accion."));
+        assertTrue(texto.contains("No puedes realizar acciones mientras haya un guardado pendiente."));
+        assertEquals("C2", partida.getTurnoActual().getPosicion().getTexto());
     }
 
     @Test
