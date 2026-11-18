@@ -272,6 +272,24 @@ public class VistaConsola {
         System.out.println("Acciones restantes: " + accionesRestantes + ".");
     }
 
+    /** Avisa que el destino no es vecino de la posicion actual, como en la pantalla del enunciado. */
+    public void mostrarMovimientoInvalido(String origen, int accionesRestantes) {
+        System.out.println("Movimiento inválido: no es vecino ortogonal de " + origen + ".");
+        System.out.println("Acciones restantes: " + accionesRestantes + ".");
+    }
+
+    /** Muestra un intento de cofre que no abrio. El fallo de contraseña va en una sola linea. */
+    public void mostrarResultadoCofre(ResultadoAccion resultado, int accionesRestantes) {
+        if (resultado == ResultadoAccion.FALLO_AUTENTICACION) {
+            System.out.println("No se pudo autenticar el archivo. Acciones: " + accionesRestantes + ".");
+        } else if (resultado == ResultadoAccion.INVENTARIO_LLENO) {
+            System.out.println("Regrese al campamento para entregar antes de abrir el cofre.");
+            System.out.println("Acciones restantes: " + accionesRestantes + ".");
+        } else {
+            mostrarResultado(resultado, accionesRestantes);
+        }
+    }
+
     /** Muestra el resultado de una accion y cuantos puntos de accion le quedan al jugador. */
     public void mostrarResultado(ResultadoAccion resultado, int accionesRestantes) {
         mostrarResultado(resultado);

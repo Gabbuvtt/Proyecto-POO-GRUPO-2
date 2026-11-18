@@ -319,22 +319,28 @@ public class Controlador {
         return false;
     }
 
-    /** Mueve al jugador y muestra su posicion real. */
+    /** Mueve al jugador. Si el destino no es vecino lo dice desde donde esta. */
     private void mover(Partida partida) {
 
-        Participante jugador = partida.getTurnoActual();
+        Participante actor = partida.getTurnoActual();
+        Coordenada origen = actor.getPosicion();
 
-        ejecutar(
-                partida,
+        ResultadoAccion resultado = partida.ejecutarAccion(
                 FabricaAcciones.crearAccionMover(
                         vista.pedirCoordenadaDestino()
                 )
         );
 
-        vista.mostrarMensaje(
-                "Posicion actual: "
-                        + jugador.getPosicion().getTexto()
-        );
+        boolean turnoCerrado = elTurnoSeCerro(partida, actor);
+        int restantes = turnoCerrado ? 0 : partida.getAccionesRestantes();
+
+        if (resultado == ResultadoAccion.NO_ES_VECINO) {
+            vista.mostrarMovimientoInvalido(origen.getTexto(), restantes);
+        } else {
+            vista.mostrarResultado(resultado, restantes);
+        }
+
+        despuesDeAccion(partida, actor, resultado, turnoCerrado);
     }
 
     /**
@@ -451,7 +457,7 @@ public class Controlador {
 
         if (partida.estaCofreAbierto()) {
 
-            vista.mostrarResultado(
+            vista.mostrarResultadoCofre(
                     ResultadoAccion.COFRE_YA_ABIERTO,
                     restantes
             );
@@ -466,7 +472,7 @@ public class Controlador {
 
         if (terrenoActual != 'X') {
 
-            vista.mostrarResultado(
+            vista.mostrarResultadoCofre(
                     ResultadoAccion.NO_ESTA_EN_COFRE,
                     restantes
             );
@@ -476,7 +482,7 @@ public class Controlador {
 
         if (partida.getPistasDescubiertas().size() < 2) {
 
-            vista.mostrarResultado(
+            vista.mostrarResultadoCofre(
                     ResultadoAccion.FALTAN_PISTAS,
                     restantes
             );
@@ -486,7 +492,7 @@ public class Controlador {
 
 
         if (partida.getAccionesRestantes() <= 0) {
-            vista.mostrarResultado(
+            vista.mostrarResultadoCofre(
                     ResultadoAccion.SIN_ACCIONES,
                     partida.getAccionesRestantes()
             );
@@ -494,7 +500,7 @@ public class Controlador {
         }
 
         if (actual.getInventario().getReliquias().size() >= 2) {
-            vista.mostrarResultado(
+            vista.mostrarResultadoCofre(
                     ResultadoAccion.INVENTARIO_LLENO,
                     partida.getAccionesRestantes()
             );
@@ -556,7 +562,7 @@ public class Controlador {
 
         } else {
 
-            vista.mostrarResultado(
+            vista.mostrarResultadoCofre(
                     resultado,
                     restantes
             );

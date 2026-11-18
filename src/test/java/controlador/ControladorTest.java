@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import servicio.PaqueteCofre;
 import servicio.ServicioCriptografico;
+import servicio.VectorAnexoB;
 import vista.VistaConsola;
 
 import java.io.ByteArrayOutputStream;
@@ -48,9 +49,11 @@ class ControladorTest {
             return true;
         }
 
+        PaqueteCofre paquete = null;
+
         @Override
         public PaqueteCofre obtenerPaqueteCofre(String partidaId) {
-            return null;
+            return paquete;
         }
 
         @Override
@@ -132,7 +135,8 @@ class ControladorTest {
     }
 
     private String salida() {
-        return captura.toString(StandardCharsets.UTF_8);
+        // en Windows println usa \r\n, se deja todo con \n para comparar
+        return captura.toString(StandardCharsets.UTF_8).replace("\r\n", "\n");
     }
 
     /** Partida nueva: Ana en C3 (campamento) y Luis en D4. Empieza Ana, ronda 1. */
@@ -275,6 +279,43 @@ class ControladorTest {
     }
 
     @Test
+    void movimientoInvalidoUsaElTextoDelEnunciado() {
+        Partida partida = partidaNueva();
+        Controlador controlador = controlador("1\nD4\n");
+        try {
+            controlador.jugar(partida);
+        } catch (IllegalStateException e) {
+            // se acabaron las teclas
+        }
+
+        String texto = salida();
+        assertTrue(texto.contains("Destino: Movimiento inválido: no es vecino ortogonal de C3.\nAcciones restantes: 3."));
+    }
+
+    @Test
+    void elCofreUsaLosTextosDelEnunciado() {
+        // la partida de prueba se llama EX-RED-01, igual que el vector del Anexo B
+        Partida partida = partidaNueva();
+        partida.getTablero().colocarTerreno(new Coordenada("C3"), TipoDeTerreno.COFRE);
+        partida.agregarPistaDescubierta(new Pista(1, "ORBITA"));
+        partida.agregarPistaDescubierta(new Pista(2, "7392"));
+        almacen.paquete = VectorAnexoB.crearPaquete();
+        Controlador controlador = controlador("4\nORBITA7392\n4\nORBITA-7392\n");
+        try {
+            controlador.jugar(partida);
+        } catch (IllegalStateException e) {
+            // se acabaron las teclas
+        }
+
+        String texto = salida();
+        assertTrue(texto.contains("PISTAS COMPARTIDAS\nPista 1: ORBITA | Pista 2: 7392\nRegla: unir pista 1, guion y pista 2."));
+        assertTrue(texto.contains("Ana en C3 | Cofre cerrado | Acciones: 3"));
+        assertTrue(texto.contains("Contraseña: No se pudo autenticar el archivo. Acciones: 2."));
+        assertTrue(texto.contains("Cofre abierto. REL-ESPECIAL incorporada al inventario.\nValor: 4 | Acciones restantes: 1\n"
+                + "Recuerde entregarla en el campamento."));
+    }
+
+    @Test
     void cadaAccionQueCambiaElEstadoSeGuardaSola() {
         Partida partida = partidaNueva();
         // mueve a C2 y sale sin guardar a mano: el movimiento ya quedo guardado
@@ -331,7 +372,7 @@ class ControladorTest {
         controlador("2\n0\n").jugar(partida);
 
         String texto = salida();
-        assertTrue(texto.contains("Inventario lleno."));
+        assertTrue(texto.contains("Regrese al campamento para entregar antes de explorar."));
         assertFalse(texto.contains("Encontraste"));
         assertFalse(texto.contains("ORBITA"));
         assertEquals(3, partida.getAccionesRestantes());
