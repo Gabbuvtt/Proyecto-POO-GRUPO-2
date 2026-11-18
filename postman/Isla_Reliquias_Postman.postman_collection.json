@@ -1,0 +1,1013 @@
+{
+  "info": {
+    "name": "Isla de las Reliquias — Contrato API v2",
+    "description": "Colección para Persona 4. URL /api/v1. Ejemplos son ILUSTRATIVOS y deben validarse con el contrato y backend definitivo; endpoints ausentes pueden fallar hasta integración. Los IDs J1/J2/P1 son placeholders.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET /salud",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/salud",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "salud"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Éxito ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/salud",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "salud"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"estado\": \"ok\",\n  \"versionContrato\": 2\n}"
+        },
+        {
+          "name": "Error ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/salud",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "salud"
+              ]
+            }
+          },
+          "status": "400",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"codigo\": \"SOLICITUD_INVALIDA\",\n  \"mensaje\": \"Solicitud invalida\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "POST /jugadores",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/jugadores",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "jugadores"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Ana Pérez\",\n  \"alias\": \"ana_ucab\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [
+        {
+          "name": "Éxito ilustrativo",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jugadores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jugadores"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana Pérez\",\n  \"alias\": \"ana_ucab\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "201",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"jugadorId\": \"J1\",\n  \"nombre\": \"Ana Pérez\",\n  \"alias\": \"ana_ucab\"\n}"
+        },
+        {
+          "name": "Error ilustrativo",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jugadores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jugadores"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Ana Pérez\",\n  \"alias\": \"ana_ucab\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "409",
+          "code": 409,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"codigo\": \"ALIAS_DUPLICADO\",\n  \"mensaje\": \"El alias ya existe\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "GET /jugadores",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/jugadores",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "jugadores"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Éxito ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jugadores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jugadores"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "[\n  {\n    \"jugadorId\": \"J1\",\n    \"nombre\": \"Ana Pérez\",\n    \"alias\": \"ana_ucab\"\n  }\n]"
+        },
+        {
+          "name": "Error ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jugadores",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jugadores"
+              ]
+            }
+          },
+          "status": "503",
+          "code": 503,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"codigo\": \"SERVICIO_NO_DISPONIBLE\",\n  \"mensaje\": \"Servicio temporalmente no disponible\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "GET /jugadores/J1/estadisticas",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/jugadores/J1/estadisticas",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "jugadores",
+            "J1",
+            "estadisticas"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Éxito ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jugadores/J1/estadisticas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jugadores",
+                "J1",
+                "estadisticas"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"jugadorId\": \"J1\",\n  \"partidasJugadas\": 0,\n  \"victorias\": 0\n}"
+        },
+        {
+          "name": "Error ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/jugadores/J1/estadisticas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "jugadores",
+                "J1",
+                "estadisticas"
+              ]
+            }
+          },
+          "status": "404",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"codigo\": \"JUGADOR_NO_ENCONTRADO\",\n  \"mensaje\": \"El jugador no existe\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "POST /partidas",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/partidas",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "partidas"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"solicitud-001\",\n  \"jugadores\": [\n    \"J1\",\n    \"J2\"\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [
+        {
+          "name": "Éxito ilustrativo",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/partidas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "partidas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestId\": \"solicitud-001\",\n  \"jugadores\": [\n    \"J1\",\n    \"J2\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "201",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"partidaId\": \"P1\",\n  \"estado\": \"EN_CURSO\",\n  \"orden\": [\n    \"J2\",\n    \"J1\"\n  ]\n}"
+        },
+        {
+          "name": "Error ilustrativo",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/partidas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "partidas"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestId\": \"solicitud-001\",\n  \"jugadores\": [\n    \"J1\",\n    \"J2\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "400",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"codigo\": \"JUGADORES_INVALIDOS\",\n  \"mensaje\": \"La partida necesita 2 jugadores distintos\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "GET /partidas",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/partidas",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "partidas"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Éxito ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/partidas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "partidas"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "[\n  {\n    \"partidaId\": \"P1\",\n    \"jugadores\": [\n      \"J1\",\n      \"J2\"\n    ],\n    \"estado\": \"EN_CURSO\",\n    \"ronda\": 1\n  }\n]"
+        },
+        {
+          "name": "Error ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/partidas",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "partidas"
+              ]
+            }
+          },
+          "status": "503",
+          "code": 503,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"codigo\": \"SERVICIO_NO_DISPONIBLE\",\n  \"mensaje\": \"Servicio temporalmente no disponible\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "GET /partidas/P1",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/partidas/P1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "partidas",
+            "P1"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Éxito ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/partidas/P1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "partidas",
+                "P1"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"partidaId\": \"P1\",\n  \"estado\": \"EN_CURSO\",\n  \"revision\": 1\n}"
+        },
+        {
+          "name": "Error ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/partidas/P1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "partidas",
+                "P1"
+              ]
+            }
+          },
+          "status": "404",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"codigo\": \"PARTIDA_NO_ENCONTRADA\",\n  \"mensaje\": \"La partida no existe\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "GET /partidas/P1/templos/B3",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/partidas/P1/templos/B3",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "partidas",
+            "P1",
+            "templos",
+            "B3"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Éxito ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/partidas/P1/templos/B3",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "partidas",
+                "P1",
+                "templos",
+                "B3"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"coordenada\": \"B3\",\n  \"reliquia\": {\n    \"reliquiaId\": \"REL-01\",\n    \"valor\": 3\n  },\n  \"pista\": {\n    \"indice\": 1,\n    \"fragmento\": \"ORBITA\"\n  }\n}"
+        },
+        {
+          "name": "Error ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/partidas/P1/templos/B3",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "partidas",
+                "P1",
+                "templos",
+                "B3"
+              ]
+            }
+          },
+          "status": "400",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"codigo\": \"NO_ES_TEMPLO\",\n  \"mensaje\": \"La casilla no es un templo\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "GET /partidas/P1/cofre",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/partidas/P1/cofre",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "partidas",
+            "P1",
+            "cofre"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Éxito ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/partidas/P1/cofre",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "partidas",
+                "P1",
+                "cofre"
+              ]
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"nota\": \"Ejemplo ilustrativo: el cuerpo real contiene el paquete cifrado del Anexo B\"\n}"
+        },
+        {
+          "name": "Error ilustrativo",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/partidas/P1/cofre",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "partidas",
+                "P1",
+                "cofre"
+              ]
+            }
+          },
+          "status": "404",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"codigo\": \"PARTIDA_NO_ENCONTRADA\",\n  \"mensaje\": \"La partida no existe\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "PUT /partidas/P1/estado",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/partidas/P1/estado",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "partidas",
+            "P1",
+            "estado"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"revisionBase\": 1,\n  \"estado\": {\n    \"estado\": \"EN_CURSO\",\n    \"ronda\": 1,\n    \"indiceJugadorActual\": 0,\n    \"accionesRestantes\": 3,\n    \"jugadores\": [\n      {\n        \"jugadorId\": \"J1\",\n        \"posicion\": \"C3\",\n        \"puntos\": 0,\n        \"inventario\": [],\n        \"entregadas\": []\n      },\n      {\n        \"jugadorId\": \"J2\",\n        \"posicion\": \"C3\",\n        \"puntos\": 0,\n        \"inventario\": [],\n        \"entregadas\": []\n      }\n    ],\n    \"templosExplorados\": [],\n    \"pistas\": [],\n    \"cofreAbierto\": false,\n    \"ganadores\": []\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": [
+        {
+          "name": "Éxito ilustrativo",
+          "originalRequest": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/partidas/P1/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "partidas",
+                "P1",
+                "estado"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revisionBase\": 1,\n  \"estado\": {\n    \"estado\": \"EN_CURSO\",\n    \"ronda\": 1,\n    \"indiceJugadorActual\": 0,\n    \"accionesRestantes\": 3,\n    \"jugadores\": [\n      {\n        \"jugadorId\": \"J1\",\n        \"posicion\": \"C3\",\n        \"puntos\": 0,\n        \"inventario\": [],\n        \"entregadas\": []\n      },\n      {\n        \"jugadorId\": \"J2\",\n        \"posicion\": \"C3\",\n        \"puntos\": 0,\n        \"inventario\": [],\n        \"entregadas\": []\n      }\n    ],\n    \"templosExplorados\": [],\n    \"pistas\": [],\n    \"cofreAbierto\": false,\n    \"ganadores\": []\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "200",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"partidaId\": \"P1\",\n  \"revision\": 2\n}"
+        },
+        {
+          "name": "Error ilustrativo",
+          "originalRequest": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/partidas/P1/estado",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "partidas",
+                "P1",
+                "estado"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"revisionBase\": 1,\n  \"estado\": {\n    \"estado\": \"EN_CURSO\",\n    \"ronda\": 1,\n    \"indiceJugadorActual\": 0,\n    \"accionesRestantes\": 3,\n    \"jugadores\": [\n      {\n        \"jugadorId\": \"J1\",\n        \"posicion\": \"C3\",\n        \"puntos\": 0,\n        \"inventario\": [],\n        \"entregadas\": []\n      },\n      {\n        \"jugadorId\": \"J2\",\n        \"posicion\": \"C3\",\n        \"puntos\": 0,\n        \"inventario\": [],\n        \"entregadas\": []\n      }\n    ],\n    \"templosExplorados\": [],\n    \"pistas\": [],\n    \"cofreAbierto\": false,\n    \"ganadores\": []\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "status": "409",
+          "code": 409,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"codigo\": \"REVISION_CONFLICTIVA\",\n  \"mensaje\": \"El estado fue modificado en otra revision\"\n}"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1",
+      "type": "string"
+    }
+  ]
+}

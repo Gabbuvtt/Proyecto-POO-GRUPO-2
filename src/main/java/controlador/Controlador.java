@@ -1,3 +1,4 @@
+
 package controlador;
 
 import modelo.AccionJuego;
@@ -13,9 +14,8 @@ import vista.VistaConsola;
 import java.util.function.LongSupplier;
 
 /**
- * Conecta la vista con el modelo: lee la opcion del jugador, le pide al modelo que la ejecute,
- * le dice a la vista que mostrar, mide el tiempo de cada turno y guarda la partida.
- * No tiene reglas del juego: eso lo decide el modelo.
+ * Conecta la vista con el modelo.
+ * Procesa las opciones, mide los turnos y guarda la partida.
  */
 public class Controlador {
 
@@ -25,166 +25,448 @@ public class Controlador {
     private final ServicioCriptografico criptografia;
     private final AlmacenPartida almacen;
     private final LongSupplier reloj;
+
     private long inicioTurno;
 
-    /** Crea el controlador con el reloj real del computador. */
-    public Controlador(VistaConsola vista, ServicioCriptografico criptografia, AlmacenPartida almacen) {
-        this(vista, criptografia, almacen, System::currentTimeMillis);
+    // Impide continuar jugando si un guardado falla.
+    private boolean guardadoPendiente = false;
+
+    /** Constructor que utiliza el reloj del computador. */
+    public Controlador(
+            VistaConsola vista,
+            ServicioCriptografico criptografia,
+            AlmacenPartida almacen) {
+
+        this(vista, criptografia, almacen,
+                System::currentTimeMillis);
     }
 
-    /** Crea el controlador con un reloj dado (en milisegundos). Sirve para probar el cronometro. */
-    public Controlador(VistaConsola vista, ServicioCriptografico criptografia, AlmacenPartida almacen,
-                       LongSupplier reloj) {
+    /** Constructor que permite utilizar un reloj de prueba. */
+    public Controlador(
+            VistaConsola vista,
+            ServicioCriptografico criptografia,
+            AlmacenPartida almacen,
+            LongSupplier reloj) {
+
         this.vista = vista;
         this.criptografia = criptografia;
         this.almacen = almacen;
         this.reloj = reloj;
     }
 
-    /** Juega la partida turno a turno hasta que termine o el jugador guarde y salga. */
+    /** Ejecuta el ciclo principal de una partida. */
     public void jugar(Partida partida) {
+
         inicioTurno = reloj.getAsLong();
+        guardadoPendiente = false;
+
         boolean salir = false;
-        while (!salir && partida.getEstado() == EstadoDePartida.EN_CURSO) {
+
+        while (!salir &&
+                (partida.getEstado() == EstadoDePartida.EN_CURSO
+                        || guardadoPendiente)) {
+
+            if (guardadoPendiente) {
+                vista.mostrarError(
+                        "Hay un guardado pendiente. "
+                                + "Debes guardar correctamente "
+                                + "antes de continuar jugando."
+                );
+            }
+
             vista.mostrarEstadoTurno(partida);
+
             int opcion = vista.pedirOpcionTurno();
+
             salir = procesarOpcion(partida, opcion);
         }
-        if (partida.getEstado() == EstadoDePartida.FINALIZADA) {
+
+        if (partida.getEstado() == EstadoDePartida.FINALIZADA
+                && !guardadoPendiente) {
             vista.mostrarFinDePartida(partida);
         }
     }
 
-    /** Hace lo que pidio el jugador. Devuelve true si hay que salir del juego. */
+    /** Procesa la opcion elegida por el jugador. */
     private boolean procesarOpcion(Partida partida, int opcion) {
+
+        // Si falla el guardado, solamente se permite
+        // consultar, reintentar guardar o guardar y salir.
+        if (guardadoPendiente
+                && opcion != 5
+                && opcion != 6
+                && opcion != 0) {
+
+            vista.mostrarError(
+                    "No puedes realizar acciones mientras "
+                            + "haya un guardado pendiente. "
+                            + "Usa la opcion 6 para reintentar."
+            );
+
+            return false;
+        }
+
         switch (opcion) {
-            case 1 -> ejecutar(partida, FabricaAcciones.crearAccionMover(vista.pedirCoordenadaDestino()));
-            case 2 -> ejecutar(partida, FabricaAcciones.crearAccionExplorar());
-            case 3 -> ejecutar(partida, FabricaAcciones.crearAccionEntregar());
+
+            case 1 -> mover(partida);
+
+            case 2 -> ejecutar(
+                    partida,
+                    FabricaAcciones.crearAccionExplorar()
+            );
+
+            case 3 -> ejecutar(
+                    partida,
+                    FabricaAcciones.crearAccionEntregar()
+            );
+
             case 4 -> abrirCofre(partida);
+
             case 5 -> vista.mostrarConsulta(partida);
+
             case 6 -> guardarAhora(partida);
+
             case 7 -> terminarTurno(partida);
+
             case 0 -> {
                 return guardarYSalir(partida);
             }
-            default -> vista.mostrarError("Opción no válida.");
+
+            default -> vista.mostrarError(
+                    "Opcion no valida."
+            );
         }
+
         return false;
     }
 
-    /** Ejecuta una accion en el modelo, muestra el resultado y cierra el turno si se acabaron las acciones. */
+    /** Mueve al jugador y muestra su posicion real. */
+    private void mover(Partida partida) {
+
+        Participante jugador = partida.getTurnoActual();
+
+        ejecutar(
+                partida,
+                FabricaAcciones.crearAccionMover(
+                        vista.pedirCoordenadaDestino()
+                )
+        );
+
+        vista.mostrarMensaje(
+                "Posicion actual: "
+                        + jugador.getPosicion().getTexto()
+        );
+    }
+
+    /**
+     * Ejecuta una accion y comprueba si el turno termino.
+     */
     private void ejecutar(Partida partida, AccionJuego accion) {
+
         Participante actor = partida.getTurnoActual();
-        ResultadoAccion resultado = partida.ejecutarAccion(accion);
-        boolean turnoCerrado = elTurnoSeCerro(partida, actor);
-        vista.mostrarResultado(resultado, turnoCerrado ? 0 : partida.getAccionesRestantes());
+
+        ResultadoAccion resultado =
+                partida.ejecutarAccion(accion);
+
+        boolean turnoCerrado =
+                elTurnoSeCerro(partida, actor);
+
+        vista.mostrarResultado(
+                resultado,
+                turnoCerrado
+                        ? 0
+                        : partida.getAccionesRestantes()
+        );
+
         if (turnoCerrado) {
             cerrarTurno(partida, actor);
         }
     }
 
+    /**
+     * Intenta abrir el cofre..
+     */
     private void abrirCofre(Partida partida) {
+
         Participante actual = partida.getTurnoActual();
+
         int restantes = partida.getAccionesRestantes();
+
         if (partida.estaCofreAbierto()) {
-            vista.mostrarResultado(ResultadoAccion.COFRE_YA_ABIERTO, restantes);
-            return;
-        }
-        char terrenoActual = partida.getTablero().obtenerCasilla(actual.getPosicion()).getTipo().getSimbolo();
-        if (terrenoActual != 'X') {
-            vista.mostrarResultado(ResultadoAccion.NO_ESTA_EN_COFRE, restantes);
-            return;
-        }
-        if (partida.getPistasDescubiertas().size() < 2) {
-            vista.mostrarResultado(ResultadoAccion.FALTAN_PISTAS, restantes);
+
+            vista.mostrarResultado(
+                    ResultadoAccion.COFRE_YA_ABIERTO,
+                    restantes
+            );
+
             return;
         }
 
-        String contrasena = vista.pedirContrasenaCofre(partida);
-        PaqueteCofre paquete = obtenerPaqueteSinFallar(partida.getPartidaId());
-        Participante actor = partida.getTurnoActual();
-        ResultadoAccion resultado = partida.ejecutarAccion(
-                FabricaAcciones.crearAccionAbrirCofre(paquete, contrasena, criptografia));
-        boolean turnoCerrado = elTurnoSeCerro(partida, actor);
-        int restantes = turnoCerrado ? 0 : partida.getAccionesRestantes();
-        if (resultado == ResultadoAccion.OK) {
-            vista.mostrarCofreAbierto(restantes);
-        } else {
-            vista.mostrarResultado(resultado, restantes);
+        char terrenoActual = partida.getTablero()
+                .obtenerCasilla(actual.getPosicion())
+                .getTipo()
+                .getSimbolo();
+
+        if (terrenoActual != 'X') {
+
+            vista.mostrarResultado(
+                    ResultadoAccion.NO_ESTA_EN_COFRE,
+                    restantes
+            );
+
+            return;
         }
+
+        if (partida.getPistasDescubiertas().size() < 2) {
+
+            vista.mostrarResultado(
+                    ResultadoAccion.FALTAN_PISTAS,
+                    restantes
+            );
+
+            return;
+        }
+
+
+        if (partida.getAccionesRestantes() <= 0) {
+            vista.mostrarResultado(
+                    ResultadoAccion.SIN_ACCIONES,
+                    partida.getAccionesRestantes()
+            );
+            return;
+        }
+
+        if (actual.getInventario().getReliquias().size() >= 2) {
+            vista.mostrarResultado(
+                    ResultadoAccion.INVENTARIO_LLENO,
+                    partida.getAccionesRestantes()
+            );
+            return;
+        }
+
+
+        String contrasena =
+                vista.pedirContrasenaCofre(partida);
+
+        PaqueteCofre paquete;
+
+        try {
+
+            paquete = almacen.obtenerPaqueteCofre(
+                    partida.getPartidaId()
+            );
+
+        } catch (RuntimeException e) {
+
+            vista.mostrarError(
+                    "No se pudo consultar el cofre en la API: "
+                            + e.getMessage()
+            );
+
+            return;
+        }
+
+        if (paquete == null) {
+
+            vista.mostrarError(
+                    "La API no devolvio el paquete del cofre."
+            );
+
+            return;
+        }
+
+        Participante actor = partida.getTurnoActual();
+
+        ResultadoAccion resultado =
+                partida.ejecutarAccion(
+                        FabricaAcciones.crearAccionAbrirCofre(
+                                paquete,
+                                contrasena,
+                                criptografia
+                        )
+                );
+
+        boolean turnoCerrado =
+                elTurnoSeCerro(partida, actor);
+
+        restantes = turnoCerrado
+                ? 0
+                : partida.getAccionesRestantes();
+
+        if (resultado == ResultadoAccion.OK) {
+
+            vista.mostrarCofreAbierto(restantes);
+
+        } else {
+
+            vista.mostrarResultado(
+                    resultado,
+                    restantes
+            );
+        }
+
         if (turnoCerrado) {
             cerrarTurno(partida, actor);
         }
     }
 
-    /** Termina el turno antes de gastar las 3 acciones. */
+    /** Termina el turno voluntariamente. */
     private void terminarTurno(Partida partida) {
+
         Participante actor = partida.getTurnoActual();
+
         partida.cambiarTurno();
+
         vista.mostrarMensaje("Turno terminado.");
+
         cerrarTurno(partida, actor);
     }
 
-    /** Guarda la partida sin cambiar el turno. */
+    /**
+     * Guarda sin cambiar el turno.
+     */
     private void guardarAhora(Partida partida) {
-        sumarTiempoDelTurno(partida.getTurnoActual());
+
+        boolean eraReintento = guardadoPendiente;
+
+        if (!eraReintento
+                && partida.getEstado() == EstadoDePartida.EN_CURSO) {
+
+            sumarTiempoDelTurno(
+                    partida.getTurnoActual()
+            );
+        }
+
         if (intentarGuardar(partida)) {
-            vista.mostrarMensaje("Partida guardada.");
+
+            if (eraReintento) {
+                inicioTurno = reloj.getAsLong();
+            }
+
+            vista.mostrarMensaje(
+                    "Partida guardada correctamente."
+            );
+
         } else {
-            vista.mostrarError("No se pudo guardar la partida. Intenta de nuevo.");
+
+            vista.mostrarError(
+                    "No se pudo guardar la partida. "
+                            + "Las acciones estan bloqueadas "
+                            + "hasta que el guardado funcione."
+            );
         }
     }
 
-    /** Guarda y solo permite salir si la API confirmo el guardado. */
+    /**
+     * Guarda y sale solamente si el almacen
+     * confirma el guardado.
+     */
     private boolean guardarYSalir(Partida partida) {
-        sumarTiempoDelTurno(partida.getTurnoActual());
+
+        boolean eraReintento = guardadoPendiente;
+
+        if (!eraReintento
+                && partida.getEstado() == EstadoDePartida.EN_CURSO) {
+
+            sumarTiempoDelTurno(
+                    partida.getTurnoActual()
+            );
+        }
+
         if (intentarGuardar(partida)) {
-            vista.mostrarMensaje("Partida guardada. ¡Hasta pronto!");
+
+            vista.mostrarMensaje(
+                    "Partida guardada. Hasta pronto!"
+            );
+
             return true;
         }
-        vista.mostrarError("No se pudo guardar la partida, por eso no se cerró el juego. Intenta de nuevo.");
+
+        vista.mostrarError(
+                "No se pudo guardar la partida. "
+                        + "No se cerrara el juego hasta "
+                        + "confirmar el guardado."
+        );
+
         return false;
     }
 
-    /** El turno se cerro si ahora le toca a otro participante o si la partida termino. */
-    private boolean elTurnoSeCerro(Partida partida, Participante actor) {
-        return partida.getTurnoActual() != actor || partida.getEstado() == EstadoDePartida.FINALIZADA;
+    /**
+     * Detecta cuando cambia el participante
+     */
+    private boolean elTurnoSeCerro(
+            Partida partida,
+            Participante actor) {
+
+        return partida.getTurnoActual() != actor
+                || partida.getEstado()
+                == EstadoDePartida.FINALIZADA;
     }
 
-    /** Cierra un turno: suma su tiempo, empieza a medir el siguiente y guarda automaticamente. */
-    private void cerrarTurno(Partida partida, Participante actor) {
+    /**
+     * Cierra el turn
+     */
+    private void cerrarTurno(
+            Partida partida,
+            Participante actor) {
+
         sumarTiempoDelTurno(actor);
+
         inicioTurno = reloj.getAsLong();
+
         if (intentarGuardar(partida)) {
-            vista.mostrarMensaje("Turno guardado.");
+
+            vista.mostrarMensaje(
+                    "Turno guardado correctamente."
+            );
+
         } else {
-            vista.mostrarError("No se pudo guardar el turno. Usa la opción Guardar para reintentar.");
+
+            vista.mostrarError(
+                    "No se pudo guardar el turno. "
+                            + "No podras continuar hasta "
+                            + "reintentar el guardado."
+            );
         }
     }
 
-    /** Suma al participante los segundos completos que lleva su turno, sin perder los sobrantes. */
-    private void sumarTiempoDelTurno(Participante actor) {
-        long segundos = (reloj.getAsLong() - inicioTurno) / MILISEGUNDOS_POR_SEGUNDO;
+    /**
+     * Acumula los segundos completos del turno
+     */
+    private void sumarTiempoDelTurno(
+            Participante actor) {
+
+        long tiempoTranscurrido =
+                reloj.getAsLong() - inicioTurno;
+
+        long segundos =
+                Math.max(0, tiempoTranscurrido)
+                        / MILISEGUNDOS_POR_SEGUNDO;
+
         actor.sumarSegundos(segundos);
-        inicioTurno = inicioTurno + segundos * MILISEGUNDOS_POR_SEGUNDO;
+
+        inicioTurno = inicioTurno
+                + segundos * MILISEGUNDOS_POR_SEGUNDO;
     }
 
-    /** Guarda; si el almacen lanza un error, lo cuenta como que no se guardo. */
+    /**
+     * Intenta guardar y actualiza el estado
+     */
     private boolean intentarGuardar(Partida partida) {
-        try {
-            return almacen.guardar(partida);
-        } catch (RuntimeException e) {
-            return false;
-        }
-    }
 
-    /** Pide el paquete del cofre; si el almacen falla, devuelve null. */
-    private PaqueteCofre obtenerPaqueteSinFallar(String partidaId) {
+        boolean guardadoCorrecto;
+
         try {
-            return almacen.obtenerPaqueteCofre(partidaId);
+
+            guardadoCorrecto = almacen.guardar(partida);
+
         } catch (RuntimeException e) {
-            return null;
+
+            guardadoCorrecto = false;
         }
+
+        guardadoPendiente = !guardadoCorrecto;
+
+        return guardadoCorrecto;
     }
 }
