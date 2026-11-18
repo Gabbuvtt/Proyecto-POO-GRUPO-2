@@ -66,6 +66,15 @@ class PantallaTurnoTest {
     }
 
     @Test
+    void tableroDelTurnoMuestraColumnasYLeyenda() {
+        new VistaConsola(new Scanner("")).mostrarTableroTurno(partidaEjemplo());
+
+        String texto = salida();
+        assertTrue(texto.contains("A    B    C    D    E"));
+        assertTrue(texto.contains("1 = Ana | 2 = Luis"));
+    }
+
+    @Test
     void pistasSeMuestranPorSeparadoYNuncaUnidas() {
         Partida partida = partidaEjemplo();
         VistaConsola vista = new VistaConsola(new Scanner(""));
