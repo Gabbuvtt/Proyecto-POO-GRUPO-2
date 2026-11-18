@@ -1,5 +1,8 @@
 package api;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import controlador.ConflictoVersionException;
 import modelo.Coordenada;
 import modelo.EstadoDePartida;
@@ -51,6 +54,11 @@ class RepositorioPartidasTest {
         @Override
         public String put(String ruta, String cuerpoJson) {
             enviados.add(cuerpoJson);
+            if (perderRespuesta) {
+                // la API guarda, pero la respuesta no llega
+                guardarEnLaApi(cuerpoJson);
+                throw new IllegalStateException("No se pudo establecer comunicacion con la API.");
+            }
             if (conflicto) {
                 throw new ErrorApi(409, "{\"codigo\":\"REVISION_INCOMPATIBLE\",\"mensaje\":\"La revision base no coincide\"}");
             }
@@ -58,6 +66,21 @@ class RepositorioPartidasTest {
         }
 
         boolean conflicto = false;
+        boolean perderRespuesta = false;
+
+        // deja en GET /partidas/{id} el estado enviado con la revision siguiente
+        private void guardarEnLaApi(String cuerpoJson) {
+            try {
+                ObjectMapper mapeador = new ObjectMapper();
+                JsonNode cuerpo = mapeador.readTree(cuerpoJson);
+                ObjectNode guardada = mapeador.createObjectNode();
+                guardada.put("revision", cuerpo.get("revisionBase").asInt() + 1);
+                guardada.set("estado", cuerpo.get("estado"));
+                respuestas.put("/partidas/EX-RED-01", guardada.toString());
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        }
     }
 
     private static final String JUGADORES = """
@@ -162,6 +185,21 @@ class RepositorioPartidasTest {
         String cuerpo = cliente.enviados.get(0);
         assertTrue(cuerpo.contains("\"revisionBase\":5"));
         assertTrue(cuerpo.contains("\"segundosConsumidos\":70"));
+    }
+
+    @Test
+    void siSePierdeLaRespuestaConfirmaConsultandoLaPartida() {
+        cliente.respuestas.put("/partidas/EX-RED-01", PARTIDA_MITAD_TURNO);
+        Partida partida = repositorio.cargarPartida("EX-RED-01");
+        cliente.perderRespuesta = true;
+
+        // la API tiene el mismo estado con revision 6, asi que el guardado vale
+        assertTrue(repositorio.guardar(partida));
+
+        // el siguiente guardado ya parte de la revision 6
+        cliente.perderRespuesta = false;
+        repositorio.guardar(partida);
+        assertTrue(cliente.enviados.get(1).contains("\"revisionBase\":6"));
     }
 
     @Test

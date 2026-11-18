@@ -743,10 +743,11 @@ public class RepositorioPartidas implements AlmacenPartida {
 
         jugador.put("puntos", participante.getPuntos());
 
-        // tiempo acumulado en sus turnos
+        // tiempo acumulado en sus turnos. Va como int porque al leer la
+        // respuesta Jackson crea un int, y un long no seria igual al comparar
         jugador.put(
                 "segundosConsumidos",
-                participante.getSegundosConsumidos()
+                (int) participante.getSegundosConsumidos()
         );
 
         agregarReliquias(
