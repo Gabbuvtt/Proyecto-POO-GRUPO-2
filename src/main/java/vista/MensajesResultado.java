@@ -13,7 +13,7 @@ public class MensajesResultado {
         return switch (resultado) {
             case OK -> "Acción realizada.";
             case PARTIDA_FINALIZADA -> "La partida ya terminó. Solo se puede consultar el resultado.";
-            case NO_ES_VECINO -> "Movimiento inválido: el destino no es vecino ortogonal de tu casilla.";
+            case NO_ES_VECINO -> "Movimiento inválido: el destino no es vecino ortogonal de tu posición actual.";
             case FUERA_DEL_MAPA -> "Esa coordenada está fuera del mapa.";
             case SIN_ACCIONES -> "No te alcanzan los puntos de acción para eso.";
             case NO_ES_TEMPLO -> "Aquí no hay un templo para explorar.";
