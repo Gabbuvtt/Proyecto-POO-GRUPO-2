@@ -1,6 +1,7 @@
 
 package controlador;
 
+import modelo.AccionAbrirCofre;
 import modelo.AccionJuego;
 import modelo.Coordenada;
 import modelo.EstadoDePartida;
@@ -8,6 +9,8 @@ import modelo.FabricaAcciones;
 import modelo.Jugador;
 import modelo.Participante;
 import modelo.Partida;
+import modelo.Pista;
+import modelo.Reliquia;
 import modelo.ResultadoAccion;
 import modelo.TipoDeTerreno;
 import servicio.FalloAutenticacionException;
@@ -317,22 +320,28 @@ public class Controlador {
         return false;
     }
 
-    /** Mueve al jugador y muestra su posicion real. */
+    /** Mueve al jugador. Si el destino no es vecino lo dice desde donde esta. */
     private void mover(Partida partida) {
 
-        Participante jugador = partida.getTurnoActual();
+        Participante actor = partida.getTurnoActual();
+        Coordenada origen = actor.getPosicion();
 
-        ejecutar(
-                partida,
+        ResultadoAccion resultado = partida.ejecutarAccion(
                 FabricaAcciones.crearAccionMover(
                         vista.pedirCoordenadaDestino()
                 )
         );
 
-        vista.mostrarMensaje(
-                "Posicion actual: "
-                        + jugador.getPosicion().getTexto()
-        );
+        boolean turnoCerrado = elTurnoSeCerro(partida, actor);
+        int restantes = turnoCerrado ? 0 : partida.getAccionesRestantes();
+
+        if (resultado == ResultadoAccion.NO_ES_VECINO) {
+            vista.mostrarMovimientoInvalido(origen.getTexto(), restantes);
+        } else {
+            vista.mostrarResultado(resultado, restantes);
+        }
+
+        despuesDeAccion(partida, actor, resultado, turnoCerrado);
     }
 
     /**
@@ -394,10 +403,25 @@ public class Controlador {
             }
         }
 
-        ejecutar(
-                partida,
+        // se leen antes de explorar para poder contar que se encontro
+        Reliquia reliquia = partida.obtenerReliquiaOculta(posicion);
+        Pista pista = partida.obtenerPistaOculta(posicion);
+        Participante actor = partida.getTurnoActual();
+
+        ResultadoAccion resultado = partida.ejecutarAccion(
                 FabricaAcciones.crearAccionExplorar()
         );
+
+        boolean turnoCerrado = elTurnoSeCerro(partida, actor);
+        int restantes = turnoCerrado ? 0 : partida.getAccionesRestantes();
+
+        if (resultado == ResultadoAccion.OK) {
+            vista.mostrarExploracion(reliquia, pista, restantes);
+        } else {
+            vista.mostrarResultado(resultado, restantes);
+        }
+
+        despuesDeAccion(partida, actor, resultado, turnoCerrado);
     }
 
     /**
@@ -420,72 +444,25 @@ public class Controlador {
                         : partida.getAccionesRestantes()
         );
 
-        if (turnoCerrado) {
-            cerrarTurno(partida, actor);
-        }
+        despuesDeAccion(partida, actor, resultado, turnoCerrado);
     }
 
     /**
-     * Intenta abrir el cofre..
+     * Intenta abrir el cofre. Antes de pedir la contrasena
+     * el modelo revisa todo lo que no depende de ella.
      */
     private void abrirCofre(Partida partida) {
 
-        Participante actual = partida.getTurnoActual();
+        ResultadoAccion previo =
+                AccionAbrirCofre.comprobarCondiciones(partida);
 
-        int restantes = partida.getAccionesRestantes();
-
-        if (partida.estaCofreAbierto()) {
-
-            vista.mostrarResultado(
-                    ResultadoAccion.COFRE_YA_ABIERTO,
-                    restantes
-            );
-
-            return;
-        }
-
-        char terrenoActual = partida.getTablero()
-                .obtenerCasilla(actual.getPosicion())
-                .getTipo()
-                .getSimbolo();
-
-        if (terrenoActual != 'X') {
-
-            vista.mostrarResultado(
-                    ResultadoAccion.NO_ESTA_EN_COFRE,
-                    restantes
-            );
-
-            return;
-        }
-
-        if (partida.getPistasDescubiertas().size() < 2) {
-
-            vista.mostrarResultado(
-                    ResultadoAccion.FALTAN_PISTAS,
-                    restantes
-            );
-
-            return;
-        }
-
-
-        if (partida.getAccionesRestantes() <= 0) {
-            vista.mostrarResultado(
-                    ResultadoAccion.SIN_ACCIONES,
+        if (previo != ResultadoAccion.OK) {
+            vista.mostrarResultadoCofre(
+                    previo,
                     partida.getAccionesRestantes()
             );
             return;
         }
-
-        if (actual.getInventario().getReliquias().size() >= 2) {
-            vista.mostrarResultado(
-                    ResultadoAccion.INVENTARIO_LLENO,
-                    partida.getAccionesRestantes()
-            );
-            return;
-        }
-
 
         String contrasena =
                 vista.pedirContrasenaCofre(partida);
@@ -531,7 +508,7 @@ public class Controlador {
         boolean turnoCerrado =
                 elTurnoSeCerro(partida, actor);
 
-        restantes = turnoCerrado
+        int restantes = turnoCerrado
                 ? 0
                 : partida.getAccionesRestantes();
 
@@ -541,15 +518,13 @@ public class Controlador {
 
         } else {
 
-            vista.mostrarResultado(
+            vista.mostrarResultadoCofre(
                     resultado,
                     restantes
             );
         }
 
-        if (turnoCerrado) {
-            cerrarTurno(partida, actor);
-        }
+        despuesDeAccion(partida, actor, resultado, turnoCerrado);
     }
 
     /** Termina el turno voluntariamente. */
@@ -650,6 +625,40 @@ public class Controlador {
                         + " de nuevo para seguir desde la version de la API."
         );
         return true;
+    }
+
+    /**
+     * Despues de una accion cierra el turno si se acabo.
+     * Si no, guarda solo cuando la accion cambio el estado.
+     */
+    private void despuesDeAccion(
+            Partida partida,
+            Participante actor,
+            ResultadoAccion resultado,
+            boolean turnoCerrado) {
+
+        if (turnoCerrado) {
+            cerrarTurno(partida, actor);
+            return;
+        }
+
+        // un fallo de contrasena tambien cobra, asi que se guarda
+        boolean cambioElEstado = resultado == ResultadoAccion.OK
+                || resultado == ResultadoAccion.FALLO_AUTENTICACION;
+
+        if (!cambioElEstado) {
+            return;
+        }
+
+        sumarTiempoDelTurno(actor);
+
+        if (!intentarGuardar(partida)) {
+            vista.mostrarError(
+                    "No se pudo guardar la accion. "
+                            + "No podras continuar hasta "
+                            + "reintentar el guardado."
+            );
+        }
     }
 
     /**

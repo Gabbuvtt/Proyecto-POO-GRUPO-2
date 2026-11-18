@@ -31,11 +31,8 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Repositorio encargado de comunicarse con la API Python
- * para guardar partidas y consultar el cofre.
- *
- * Implementa AlmacenPartida para mantener separado
- * el controlador de los detalles de HTTP y JSON.
+ * Lee y guarda jugadores y partidas en la API de Python y pasa el JSON a objetos del modelo.
+ * El controlador lo usa por medio de AlmacenPartida, asi no depende de HTTP ni de JSON.
  */
 public class RepositorioPartidas implements AlmacenPartida {
 
@@ -743,10 +740,11 @@ public class RepositorioPartidas implements AlmacenPartida {
 
         jugador.put("puntos", participante.getPuntos());
 
-        // tiempo acumulado en sus turnos
+        // tiempo acumulado en sus turnos. Va como int porque al leer la
+        // respuesta Jackson crea un int, y un long no seria igual al comparar
         jugador.put(
                 "segundosConsumidos",
-                participante.getSegundosConsumidos()
+                (int) participante.getSegundosConsumidos()
         );
 
         agregarReliquias(

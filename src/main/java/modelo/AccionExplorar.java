@@ -6,34 +6,6 @@ package modelo;
  */
 public class AccionExplorar implements AccionJuego {
 
-    private final Reliquia reliquiaApi;
-    private final Pista pistaApi;
-    private final boolean usarDatosApi;
-
-    /**
-     * Constructor original, conservado temporalmente
-     */
-    public AccionExplorar() {
-        this.reliquiaApi = null;
-        this.pistaApi = null;
-        this.usarDatosApi = false;
-    }
-
-    /**
-     * Crea una exploracion con los datos obtenidos de la API.
-     */
-    public AccionExplorar(Reliquia reliquia, Pista pista) {
-        if (reliquia == null) {
-            throw new IllegalArgumentException(
-                    "La API debe proporcionar una reliquia."
-            );
-        }
-
-        this.reliquiaApi = reliquia;
-        this.pistaApi = pista;
-        this.usarDatosApi = true;
-    }
-
     /** Recoge la reliquia y la pista del templo actual. Cuesta 1 accion. */
     @Override
     public ResultadoAccion ejecutar(Partida partida) {
@@ -60,13 +32,9 @@ public class AccionExplorar implements AccionJuego {
             return ResultadoAccion.TEMPLO_YA_EXPLORADO;
         }
 
-        Reliquia reliquia = usarDatosApi
-                ? reliquiaApi
-                : partida.obtenerReliquiaOculta(pos);
-
-        Pista pista = usarDatosApi
-                ? pistaApi
-                : partida.obtenerPistaOculta(pos);
+        // el controlador ya dejo en la partida lo que trajo de la API
+        Reliquia reliquia = partida.obtenerReliquiaOculta(pos);
+        Pista pista = partida.obtenerPistaOculta(pos);
 
         if (reliquia != null) {
             boolean seAgrego =

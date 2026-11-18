@@ -226,7 +226,7 @@ public class VistaConsola {
         mostrarPistas(partida);
     }
 
-    /** Muestra los fragmentos de pista conocidos, SIN unirlos: el jugador arma la contrasena. */
+    /** Muestra los fragmentos de pista conocidos sin unirlos, porque la contrasena la arma el jugador. */
     public void mostrarPistas(Partida partida) {
         System.out.println();
         System.out.println("PISTAS COMPARTIDAS");
@@ -259,6 +259,37 @@ public class VistaConsola {
         }
         return texto.toString();
     }
+    /** Cuenta que reliquia y que pista se encontraron al explorar. La pista puede ser null. */
+    public void mostrarExploracion(Reliquia reliquia, Pista pista, int accionesRestantes) {
+        if (reliquia != null) {
+            System.out.println("Encontraste " + reliquia.getReliquiaId() + ", valor " + reliquia.getValor() + ".");
+        }
+        if (pista != null) {
+            System.out.println("Pista " + pista.getIndice() + " descubierta: " + pista.getFragmento());
+        } else {
+            System.out.println("Este templo no tenía pista.");
+        }
+        System.out.println("Acciones restantes: " + accionesRestantes + ".");
+    }
+
+    /** Avisa que el destino no es vecino de la posicion actual, como en la pantalla del enunciado. */
+    public void mostrarMovimientoInvalido(String origen, int accionesRestantes) {
+        System.out.println("Movimiento inválido: no es vecino ortogonal de " + origen + ".");
+        System.out.println("Acciones restantes: " + accionesRestantes + ".");
+    }
+
+    /** Muestra un intento de cofre que no abrio. El fallo de contraseña va en una sola linea. */
+    public void mostrarResultadoCofre(ResultadoAccion resultado, int accionesRestantes) {
+        if (resultado == ResultadoAccion.FALLO_AUTENTICACION) {
+            System.out.println("No se pudo autenticar el archivo. Acciones: " + accionesRestantes + ".");
+        } else if (resultado == ResultadoAccion.INVENTARIO_LLENO) {
+            System.out.println("Regrese al campamento para entregar antes de abrir el cofre.");
+            System.out.println("Acciones restantes: " + accionesRestantes + ".");
+        } else {
+            mostrarResultado(resultado, accionesRestantes);
+        }
+    }
+
     /** Muestra el resultado de una accion y cuantos puntos de accion le quedan al jugador. */
     public void mostrarResultado(ResultadoAccion resultado, int accionesRestantes) {
         mostrarResultado(resultado);
