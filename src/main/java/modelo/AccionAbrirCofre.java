@@ -58,7 +58,7 @@ public class AccionAbrirCofre implements AccionJuego {
         return ResultadoAccion.OK;
     }
 
-    /** Intenta abrir el cofre; solo cobra si se llega a descifrar. */
+    /** Intenta abrir el cofre. Solo cobra si se llega a intentar el descifrado. */
     @Override
     public ResultadoAccion ejecutar(Partida partida) {
         ResultadoAccion previo = comprobarCondiciones(partida);

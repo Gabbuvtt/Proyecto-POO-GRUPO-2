@@ -226,7 +226,7 @@ public class VistaConsola {
         mostrarPistas(partida);
     }
 
-    /** Muestra los fragmentos de pista conocidos, SIN unirlos: el jugador arma la contrasena. */
+    /** Muestra los fragmentos de pista conocidos sin unirlos, porque la contrasena la arma el jugador. */
     public void mostrarPistas(Partida partida) {
         System.out.println();
         System.out.println("PISTAS COMPARTIDAS");

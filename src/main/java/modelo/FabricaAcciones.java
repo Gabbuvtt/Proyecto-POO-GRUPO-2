@@ -4,7 +4,7 @@ package modelo;
 import servicio.PaqueteCofre;
 import servicio.ServicioCriptografico;
 
-/** Fabrica encargada de crear las acciones del juego segun la opcion del menu (Patron Factory). */
+/** Crea las acciones del juego que pide el controlador segun la opcion del menu. */
 public class FabricaAcciones {
 
     /** Crea una accion de movimiento hacia la coordenada destino indicada. */

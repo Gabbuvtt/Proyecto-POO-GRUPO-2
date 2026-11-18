@@ -12,8 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 /**
- * Cliente encargado de comunicarse con la API Python mediante HTTP.
- * Permite realizar peticiones GET, POST y PUT.
+ * Hace las peticiones GET, POST y PUT a la API de Python.
  */
 public class ClienteApi {
 
