@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Expedición: La Isla de las Reliquias — API v1 (Contrato v2)",
-    "description": "Colección oficial con los 10 endpoints del contrato v2, casos de éxito y ejemplos de error.",
+    "description": "Los 10 endpoints del contrato v2, cada uno con ejemplos de éxito y de error.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [

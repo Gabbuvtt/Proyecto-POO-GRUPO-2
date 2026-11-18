@@ -5,7 +5,7 @@ import modelo.AccionAbrirCofre;
 import java.util.regex.Pattern;
 
 /**
- * Valida con expresiones regulares lo que escribe el usuario, ANTES de enviarlo a la API o al modelo.
+ * Valida con expresiones regulares lo que escribe el usuario antes de enviarlo a la API o al modelo.
  * Todos los metodos devuelven true/false y no imprimen nada.
  */
 public class ValidadorEntrada {
@@ -34,8 +34,8 @@ public class ValidadorEntrada {
 
     /**
      * Indica si la contrasena tiene formato admisible: de 4 a 20 caracteres con el patron
-     * letras/digitos, guion opcional, letras/digitos. Un formato valido pero incorrecto SI cuesta accion;
-     * un formato invalido NO.
+     * letras/digitos, guion opcional, letras/digitos. Si el formato es valido pero la contrasena
+     * es incorrecta se cobra una accion. Si el formato es invalido no se cobra.
      */
     public boolean esFormatoContrasenaValido(String contrasena) {
         // la regla esta en el modelo, aqui solo se reutiliza
