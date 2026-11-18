@@ -220,4 +220,23 @@ public class Partida {
         }
         return ganadores;
     }
+
+    /**
+     * Devuelve 0 si juega el primer participante
+     * o 1 si juega el segundo participante.
+     */
+    public int getIndiceJugadorActual() {
+        if (turnoActual == participante1) {
+            return 0;
+        }
+        return 1;
+    }
+
+    /**
+     * Devuelve las coordenadas de los templos explorados.
+     */
+    public java.util.ArrayList<String> getTemplosExplorados() {
+        return new java.util.ArrayList<>(templosExplorados);
+    }
+
 }
