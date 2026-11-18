@@ -27,9 +27,11 @@ public class AccionAbrirCofre implements AccionJuego {
         this.servicio = servicio;
     }
 
-    /** Intenta abrir el cofre; solo cobra si se llega a descifrar. */
-    @Override
-    public ResultadoAccion ejecutar(Partida partida) {
+    /**
+     * Revisa lo que no depende de la contrasena: partida en curso, estar en X,
+     * cofre cerrado, dos pistas, espacio y acciones. Devuelve OK si se puede intentar.
+     */
+    public static ResultadoAccion comprobarCondiciones(Partida partida) {
         if (partida.getEstado() != EstadoDePartida.EN_CURSO) {
             return ResultadoAccion.PARTIDA_FINALIZADA;
         }
@@ -53,7 +55,18 @@ public class AccionAbrirCofre implements AccionJuego {
         if (partida.getAccionesRestantes() < COSTO) {
             return ResultadoAccion.SIN_ACCIONES;
         }
+        return ResultadoAccion.OK;
+    }
 
+    /** Intenta abrir el cofre; solo cobra si se llega a descifrar. */
+    @Override
+    public ResultadoAccion ejecutar(Partida partida) {
+        ResultadoAccion previo = comprobarCondiciones(partida);
+        if (previo != ResultadoAccion.OK) {
+            return previo;
+        }
+
+        Participante actual = partida.getTurnoActual();
         String texto = normalizar(contrasena);
         if (!formatoValido(texto)) {
             return ResultadoAccion.FORMATO_INVALIDO;
@@ -81,7 +94,7 @@ public class AccionAbrirCofre implements AccionJuego {
         }
 
         partida.abrirCofre();
-        actual.getInventario().agregarReliquia(new Reliquia(ID_ESPECIAL, ReglasDelJuego.getValorReliquiaEspecial()));
+        actual.getInventario().agregarReliquia(new Reliquia(ID_ESPECIAL, ReglasDelJuego.VALOR_RELIQUIA_ESPECIAL));
         partida.consumirAcciones(COSTO);
         return ResultadoAccion.OK;
     }

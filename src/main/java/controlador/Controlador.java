@@ -1,6 +1,7 @@
 
 package controlador;
 
+import modelo.AccionAbrirCofre;
 import modelo.AccionJuego;
 import modelo.Coordenada;
 import modelo.EstadoDePartida;
@@ -447,66 +448,21 @@ public class Controlador {
     }
 
     /**
-     * Intenta abrir el cofre..
+     * Intenta abrir el cofre. Antes de pedir la contrasena
+     * el modelo revisa todo lo que no depende de ella.
      */
     private void abrirCofre(Partida partida) {
 
-        Participante actual = partida.getTurnoActual();
+        ResultadoAccion previo =
+                AccionAbrirCofre.comprobarCondiciones(partida);
 
-        int restantes = partida.getAccionesRestantes();
-
-        if (partida.estaCofreAbierto()) {
-
+        if (previo != ResultadoAccion.OK) {
             vista.mostrarResultadoCofre(
-                    ResultadoAccion.COFRE_YA_ABIERTO,
-                    restantes
-            );
-
-            return;
-        }
-
-        char terrenoActual = partida.getTablero()
-                .obtenerCasilla(actual.getPosicion())
-                .getTipo()
-                .getSimbolo();
-
-        if (terrenoActual != 'X') {
-
-            vista.mostrarResultadoCofre(
-                    ResultadoAccion.NO_ESTA_EN_COFRE,
-                    restantes
-            );
-
-            return;
-        }
-
-        if (partida.getPistasDescubiertas().size() < 2) {
-
-            vista.mostrarResultadoCofre(
-                    ResultadoAccion.FALTAN_PISTAS,
-                    restantes
-            );
-
-            return;
-        }
-
-
-        if (partida.getAccionesRestantes() <= 0) {
-            vista.mostrarResultadoCofre(
-                    ResultadoAccion.SIN_ACCIONES,
+                    previo,
                     partida.getAccionesRestantes()
             );
             return;
         }
-
-        if (actual.getInventario().getReliquias().size() >= 2) {
-            vista.mostrarResultadoCofre(
-                    ResultadoAccion.INVENTARIO_LLENO,
-                    partida.getAccionesRestantes()
-            );
-            return;
-        }
-
 
         String contrasena =
                 vista.pedirContrasenaCofre(partida);
@@ -552,7 +508,7 @@ public class Controlador {
         boolean turnoCerrado =
                 elTurnoSeCerro(partida, actor);
 
-        restantes = turnoCerrado
+        int restantes = turnoCerrado
                 ? 0
                 : partida.getAccionesRestantes();
 
