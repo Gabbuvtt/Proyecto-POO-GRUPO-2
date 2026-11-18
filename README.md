@@ -68,19 +68,13 @@ Todos los comandos se ejecutan dentro de la carpeta `api`.
 
 ### Verificación con /salud
 
-Con el servidor encendido, abre en el navegador o consulta con `curl`:
-
-```
-GET http://localhost:8000/api/v1/salud
-```
-
-Debe responder `200 OK` con:
+Con el servidor corriendo, abrir `http://localhost:8000/api/v1/salud` en el navegador. Debe devolver:
 
 ```json
 {"disponible": true, "versionContrato": 2}
 ```
 
-La documentación interactiva de Swagger UI (con los 10 endpoints, esquemas y códigos de respuesta) está disponible en `http://localhost:8000/docs`.
+La documentación de Swagger está en `http://localhost:8000/docs`.
 
 ## Ejecutar el juego Java
 
@@ -140,24 +134,21 @@ Si Maven no está en el PATH se puede usar el de IntelliJ, por ejemplo:
 
 ## Postman
 
-En la carpeta `postman/` se incluyen la colección y el entorno listos para importar:
+En `postman/` están la colección (`Expedicion.postman_collection.json`) y el entorno (`Expedicion.postman_environment.json`).
 
-1. Abrir Postman y hacer clic en **Import**.
-2. Seleccionar `postman/Expedicion.postman_collection.json` y `postman/Expedicion.postman_environment.json`.
-3. En la esquina superior derecha de Postman, seleccionar el entorno **Expedición - Local** (define `base_url = http://localhost:8000/api/v1`).
-4. Con la API corriendo en el puerto `8000`, ejecutar los requests en orden (desde `GET /salud` hasta `GET /jugadores/{id}/estadisticas`). Cada endpoint incluye ejemplos guardados de respuestas exitosas y de error.
+1. Importar ambos archivos en Postman.
+2. Seleccionar el entorno **Expedición - Local** (`base_url` = `http://localhost:8000/api/v1`).
+3. Levantar la API en el puerto `8000` y probar los endpoints en orden.
 
 ## Guardado
 
-La API persiste jugadores, partidas y solicitudes (`requestId`) en un único archivo JSON: `api/datos/expedicion.json`.
+Los jugadores, partidas y solicitudes (`requestId`) se guardan en `api/datos/expedicion.json`.
 
-- **Escritura atómica**: cada cambio se escribe primero en `api/datos/expedicion.json.tmp` con `flush` y `os.fsync`, y luego reemplaza al archivo definitivo con `os.replace`, evitando archivos truncados si ocurre un fallo.
-- **Control optimista por revisión (`revisionBase`)**: toda partida inicia en `revision = 1`. Al guardar con `PUT /api/v1/partidas/{id}/estado`, la API verifica que `revisionBase` coincida con la revisión actual; si coincide, guarda el snapshot y aumenta la revisión en `1`.
-- **Reintento idempotente**: si el cliente reenvía exactamente el mismo `estado` con el mismo `revisionBase` del último guardado confirmado, la API devuelve la confirmación previa sin duplicar cambios ni subir la revisión.
-- **Conflictos (`409 Conflict`)**: enviar una `revisionBase` distinta a la actual (o reutilizar una base anterior con otro estado) devuelve `409 REVISION_INCOMPATIBLE`.
-- **Cierre de partida**: el primer guardado con estado `FINALIZADA` (ronda `8` y `accionesRestantes = 0`) fija el resultado y las estadísticas; intentos posteriores de modificarla devuelven `409 PARTIDA_FINALIZADA` (salvo reintento idéntico).
+- Para no dañar el archivo si falla una escritura, primero se escribe en `api/datos/expedicion.json.tmp` y luego se reemplaza el archivo definitivo.
+- Cada partida empieza en revisión `1`. Al guardar con `PUT /partidas/{id}/estado`, se envía `revisionBase`: si coincide con la revisión actual se guarda y sube en `1`; si se reintenta exactamente el mismo guardado devuelve la misma confirmación; si cambia con una base vieja responde `409`.
+- El primer guardado con estado `FINALIZADA` (ronda `8` y `0` acciones) cierra el resultado y las estadísticas de esa partida.
 
 ## Errores conocidos
 
-- La API está diseñada para ejecutarse como un único proceso local (`uvicorn main:app --port 8000`) y una sola partida activa por sesión; no soporta múltiples instancias de servidor escribiendo simultáneamente sobre el mismo archivo JSON.
-- Si se borra o edita manualmente `api/datos/expedicion.json` mientras el servidor está corriendo, es necesario reiniciar el servidor para recargar el estado en memoria.
+- La API funciona con un solo proceso local a la vez; no soporta varias instancias escribiendo al mismo tiempo en `expedicion.json`.
+- Si se borra o edita `expedicion.json` a mano con el servidor encendido, hay que reiniciar la API para que recargue los datos.
