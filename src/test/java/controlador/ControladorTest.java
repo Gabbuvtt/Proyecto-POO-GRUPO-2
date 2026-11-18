@@ -268,6 +268,25 @@ class ControladorTest {
         assertEquals("REL-01", ana.getInventario().getReliquias().get(0).getReliquiaId());
         assertEquals("ORBITA", partida.getPistasDescubiertas().get(0).getFragmento());
         assertEquals(2, partida.getAccionesRestantes());
+
+        String texto = salida();
+        assertTrue(texto.contains("Encontraste REL-01, valor 2."));
+        assertTrue(texto.contains("Pista 1 descubierta: ORBITA"));
+    }
+
+    @Test
+    void conInventarioLlenoExplorarNoRevelaNada() {
+        Partida partida = partidaEnTemplo();
+        Participante ana = partida.getTurnoActual();
+        ana.getInventario().agregarReliquia(new Reliquia("REL-02", 2));
+        ana.getInventario().agregarReliquia(new Reliquia("REL-03", 1));
+        controlador("2\n0\n").jugar(partida);
+
+        String texto = salida();
+        assertTrue(texto.contains("Inventario lleno."));
+        assertFalse(texto.contains("Encontraste"));
+        assertFalse(texto.contains("ORBITA"));
+        assertEquals(3, partida.getAccionesRestantes());
     }
 
     @Test

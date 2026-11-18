@@ -8,6 +8,8 @@ import modelo.FabricaAcciones;
 import modelo.Jugador;
 import modelo.Participante;
 import modelo.Partida;
+import modelo.Pista;
+import modelo.Reliquia;
 import modelo.ResultadoAccion;
 import modelo.TipoDeTerreno;
 import servicio.FalloAutenticacionException;
@@ -394,10 +396,27 @@ public class Controlador {
             }
         }
 
-        ejecutar(
-                partida,
+        // se leen antes de explorar para poder contar que se encontro
+        Reliquia reliquia = partida.obtenerReliquiaOculta(posicion);
+        Pista pista = partida.obtenerPistaOculta(posicion);
+        Participante actor = partida.getTurnoActual();
+
+        ResultadoAccion resultado = partida.ejecutarAccion(
                 FabricaAcciones.crearAccionExplorar()
         );
+
+        boolean turnoCerrado = elTurnoSeCerro(partida, actor);
+        int restantes = turnoCerrado ? 0 : partida.getAccionesRestantes();
+
+        if (resultado == ResultadoAccion.OK) {
+            vista.mostrarExploracion(reliquia, pista, restantes);
+        } else {
+            vista.mostrarResultado(resultado, restantes);
+        }
+
+        if (turnoCerrado) {
+            cerrarTurno(partida, actor);
+        }
     }
 
     /**

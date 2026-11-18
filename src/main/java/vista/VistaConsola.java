@@ -259,6 +259,19 @@ public class VistaConsola {
         }
         return texto.toString();
     }
+    /** Cuenta que reliquia y que pista se encontraron al explorar. La pista puede ser null. */
+    public void mostrarExploracion(Reliquia reliquia, Pista pista, int accionesRestantes) {
+        if (reliquia != null) {
+            System.out.println("Encontraste " + reliquia.getReliquiaId() + ", valor " + reliquia.getValor() + ".");
+        }
+        if (pista != null) {
+            System.out.println("Pista " + pista.getIndice() + " descubierta: " + pista.getFragmento());
+        } else {
+            System.out.println("Este templo no tenía pista.");
+        }
+        System.out.println("Acciones restantes: " + accionesRestantes + ".");
+    }
+
     /** Muestra el resultado de una accion y cuantos puntos de accion le quedan al jugador. */
     public void mostrarResultado(ResultadoAccion resultado, int accionesRestantes) {
         mostrarResultado(resultado);
