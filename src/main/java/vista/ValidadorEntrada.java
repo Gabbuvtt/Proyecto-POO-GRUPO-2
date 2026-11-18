@@ -3,6 +3,10 @@ package vista;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+/**
+ * Valida con expresiones regulares lo que escribe el usuario, ANTES de enviarlo a la API o al modelo.
+ * Todos los metodos devuelven true/false y no imprimen nada.
+ */
 public class ValidadorEntrada {
 
     /** Nombre: de 1 a 80 caracteres (se evalua ya sin espacios al inicio ni al final). */
@@ -40,3 +44,21 @@ public class ValidadorEntrada {
         }
         return contrasena.toUpperCase(Locale.ROOT);
     }
+
+    /**
+     * Indica si la contrasena tiene formato admisible: de 4 a 20 caracteres con el patron
+     * letras/digitos, guion opcional, letras/digitos. Un formato valido pero incorrecto SI cuesta accion;
+     * un formato invalido NO.
+     */
+    public boolean esFormatoContrasenaValido(String contrasena) {
+        String normalizada = normalizarContrasena(contrasena);
+        if (normalizada == null) {
+            return false;
+        }
+        int largo = normalizada.length();
+        if (largo < LARGO_MINIMO_CONTRASENA || largo > LARGO_MAXIMO_CONTRASENA) {
+            return false;
+        }
+        return PATRON_CONTRASENA.matcher(normalizada).matches();
+    }
+}
