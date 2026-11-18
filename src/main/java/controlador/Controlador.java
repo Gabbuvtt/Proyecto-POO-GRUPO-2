@@ -5,14 +5,17 @@ import modelo.AccionJuego;
 import modelo.Coordenada;
 import modelo.EstadoDePartida;
 import modelo.FabricaAcciones;
+import modelo.Jugador;
 import modelo.Participante;
 import modelo.Partida;
 import modelo.ResultadoAccion;
 import modelo.TipoDeTerreno;
 import servicio.PaqueteCofre;
 import servicio.ServicioCriptografico;
+import vista.DatosRegistro;
 import vista.VistaConsola;
 
+import java.util.ArrayList;
 import java.util.function.LongSupplier;
 
 /**
@@ -54,6 +57,144 @@ public class Controlador {
         this.criptografia = criptografia;
         this.almacen = almacen;
         this.reloj = reloj;
+    }
+
+    /** Comprueba la API y muestra el menu principal hasta que el usuario sale. */
+    public void iniciar() {
+
+        if (!almacen.apiDisponible()) {
+            vista.mostrarError(
+                    "La API no esta disponible o usa otra version "
+                            + "del contrato. Iniciala e intenta de nuevo."
+            );
+            return;
+        }
+
+        boolean salir = false;
+
+        while (!salir) {
+
+            int opcion = vista.pedirOpcionMenuPrincipal();
+
+            // si falla una consulta se avisa y se vuelve al menu
+            try {
+                switch (opcion) {
+                    case 1 -> registrarJugador();
+                    case 2 -> nuevaPartida();
+                    case 3 -> cargarPartida();
+                    case 4 -> verEstadisticas();
+                    case 5 -> vista.mostrarAyuda();
+                    default -> salir = true;
+                }
+            } catch (RuntimeException e) {
+                vista.mostrarError(e.getMessage());
+            }
+        }
+    }
+
+    /** Pide nombre y alias y registra al jugador en la API. */
+    private void registrarJugador() {
+        DatosRegistro datos = vista.pedirDatosRegistro();
+        String jugadorId = almacen.registrarJugador(
+                datos.nombre(), datos.alias()
+        );
+        vista.mostrarJugadorCreado(jugadorId);
+    }
+
+    /** Pide los dos jugadores, crea la partida y empieza a jugar. */
+    private void nuevaPartida() {
+        vista.mostrarMensaje("");
+        vista.mostrarMensaje("Nueva partida");
+
+        Jugador jugador1 = pedirJugador("Jugador 1: ");
+        if (jugador1 == null) {
+            return;
+        }
+
+        Jugador jugador2 = pedirJugador("Jugador 2: ");
+        if (jugador2 == null) {
+            return;
+        }
+
+        if (jugador1.getJugadorId().equals(jugador2.getJugadorId())) {
+            vista.mostrarError("Los dos jugadores deben ser distintos.");
+            return;
+        }
+
+        String partidaId = almacen.crearPartida(
+                jugador1.getJugadorId(), jugador2.getJugadorId()
+        );
+
+        // se trae completa para tener el campamento y la revision
+        Partida partida = almacen.cargarPartida(partidaId);
+        vista.mostrarPartidaCreada(partida);
+        jugar(partida);
+    }
+
+    /** Lista las partidas de un jugador y abre la que elija. */
+    private void cargarPartida() {
+        Jugador jugador = pedirJugador("Alias: ");
+        if (jugador == null) {
+            return;
+        }
+
+        ArrayList<ResumenPartida> partidas =
+                almacen.listarPartidas(jugador.getJugadorId());
+
+        if (partidas.isEmpty()) {
+            vista.mostrarMensaje(jugador.getNombre() + " no tiene partidas.");
+            return;
+        }
+
+        ArrayList<String> lineas = new ArrayList<>();
+        for (ResumenPartida resumen : partidas) {
+            lineas.add(resumen.getPartidaId()
+                    + " | " + resumen.getJugadores()
+                    + " | " + resumen.getEstado()
+                    + " | Ronda " + resumen.getRonda());
+        }
+
+        int elegida = vista.elegirDeLista("Partidas de " + jugador.getNombre(), lineas);
+        if (elegida == 0) {
+            return;
+        }
+
+        // una partida finalizada solo muestra su resultado
+        Partida partida = almacen.cargarPartida(
+                partidas.get(elegida - 1).getPartidaId()
+        );
+        jugar(partida);
+    }
+
+    /** Muestra las estadisticas de un jugador. */
+    private void verEstadisticas() {
+        Jugador jugador = pedirJugador("Alias: ");
+        if (jugador == null) {
+            return;
+        }
+
+        EstadisticasJugador datos =
+                almacen.obtenerEstadisticas(jugador.getJugadorId());
+
+        vista.mostrarEstadisticas(
+                jugador.getNombre(),
+                datos.getPartidasFinalizadas(),
+                datos.getVictorias(),
+                datos.getPuntosAcumulados(),
+                datos.getReliquiasEntregadas()
+        );
+    }
+
+    /** Pide un alias y busca al jugador. Devuelve null si no existe. */
+    private Jugador pedirJugador(String mensaje) {
+        String alias = vista.pedirAlias(mensaje);
+        Jugador jugador = almacen.buscarJugadorPorAlias(alias);
+
+        if (jugador == null) {
+            vista.mostrarError("No existe un jugador con el alias " + alias + ".");
+        }
+
+        return jugador;
     }
 
     /** Ejecuta el ciclo principal de una partida. */

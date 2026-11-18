@@ -201,6 +201,7 @@ public class RepositorioPartidas implements AlmacenPartida {
     /**
      * Indica si la API responde y usa la version de contrato esperada.
      */
+    @Override
     public boolean apiDisponible() {
         try {
             JsonNode salud = leerJson(cliente.get("/salud"));
@@ -217,6 +218,7 @@ public class RepositorioPartidas implements AlmacenPartida {
     /**
      * Registra un jugador y devuelve su jugadorId.
      */
+    @Override
     public String registrarJugador(String nombre, String alias) {
         ObjectNode cuerpo = mapeador.createObjectNode();
         cuerpo.put("nombre", nombre);
@@ -236,6 +238,7 @@ public class RepositorioPartidas implements AlmacenPartida {
     /**
      * Busca un jugador por su alias. Devuelve null si no existe.
      */
+    @Override
     public Jugador buscarJugadorPorAlias(String alias) {
         JsonNode lista = leerJson(consultar(
                 "/jugadores?alias="
@@ -253,6 +256,7 @@ public class RepositorioPartidas implements AlmacenPartida {
      * Crea una partida para dos jugadores y devuelve su partidaId.
      * Si falla la red reintenta con el mismo requestId.
      */
+    @Override
     public String crearPartida(String jugador1, String jugador2) {
         ObjectNode cuerpo = mapeador.createObjectNode();
         cuerpo.put("requestId", UUID.randomUUID().toString());
@@ -291,6 +295,7 @@ public class RepositorioPartidas implements AlmacenPartida {
     /**
      * Lista las partidas en las que participa un jugador.
      */
+    @Override
     public ArrayList<ResumenPartida> listarPartidas(String jugadorId) {
         JsonNode lista = leerJson(consultar(
                 "/partidas?jugadorId="
@@ -323,6 +328,7 @@ public class RepositorioPartidas implements AlmacenPartida {
     /**
      * Consulta las estadisticas de un jugador.
      */
+    @Override
     public EstadisticasJugador obtenerEstadisticas(String jugadorId) {
         JsonNode datos = leerJson(consultar(
                 "/jugadores/" + jugadorId + "/estadisticas"
@@ -340,6 +346,7 @@ public class RepositorioPartidas implements AlmacenPartida {
      * Trae una partida guardada y la reconstruye con todo su estado.
      * No reinicia el turno: ronda, jugador y acciones quedan como se guardaron.
      */
+    @Override
     public Partida cargarPartida(String partidaId) {
         JsonNode datos = leerJson(consultar("/partidas/" + partidaId));
         JsonNode estado = datos.path("estado");

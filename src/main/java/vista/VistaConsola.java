@@ -114,6 +114,59 @@ public class VistaConsola {
         System.out.println("Jugador creado: " + jugadorId);
     }
 
+    /** Pide un alias y lo repite hasta que tenga un formato valido. */
+    public String pedirAlias(String mensaje) {
+        String alias = leerTexto(mensaje);
+        while (!validador.esAliasValido(alias)) {
+            mostrarError("el alias debe tener de 3 a 20 caracteres: letras, numeros, guion o guion bajo.");
+            alias = leerTexto(mensaje);
+        }
+        return alias;
+    }
+
+    /** Muestra el id, el campamento, el orden sorteado y la ronda de una partida nueva. */
+    public void mostrarPartidaCreada(Partida partida) {
+        System.out.println();
+        System.out.println("Partida: " + partida.getPartidaId()
+                + " | Campamento: " + partida.getParticipante1().getPosicion().getTexto());
+        System.out.println("Orden sorteado: " + partida.getParticipante1().getJugador().getNombre()
+                + ", " + partida.getParticipante2().getJugador().getNombre()
+                + " | Ronda: " + partida.getRondaActual() + " de " + ReglasDelJuego.MAX_RONDAS);
+    }
+
+    /** Muestra una lista numerada y devuelve el numero elegido, o 0 para volver. */
+    public int elegirDeLista(String titulo, ArrayList<String> opciones) {
+        System.out.println();
+        System.out.println(titulo);
+        for (int i = 0; i < opciones.size(); i++) {
+            System.out.println((i + 1) + ". " + opciones.get(i));
+        }
+        System.out.println("0. Volver");
+        return leerEntero("Opción: ", 0, opciones.size());
+    }
+
+    /** Muestra las estadisticas de un jugador. */
+    public void mostrarEstadisticas(String nombre, int finalizadas, int victorias,
+                                    int puntos, int reliquias) {
+        System.out.println();
+        System.out.println("ESTADÍSTICAS DE " + nombre.toUpperCase());
+        System.out.println("Partidas finalizadas: " + finalizadas);
+        System.out.println("Victorias: " + victorias);
+        System.out.println("Puntos acumulados: " + puntos);
+        System.out.println("Reliquias entregadas: " + reliquias);
+    }
+
+    /** Resume las reglas del juego. */
+    public void mostrarAyuda() {
+        System.out.println();
+        System.out.println("REGLAS Y AYUDA");
+        System.out.println("- Cada jugador tiene 3 puntos de acción por turno y la partida dura 8 rondas.");
+        System.out.println("- Moverse a una casilla vecina cuesta 1 (al pantano P cuesta 2). Explorar un templo cuesta 1.");
+        System.out.println("- Las reliquias se entregan en el campamento C y entregar cuesta 1. Solo se cargan 2 a la vez.");
+        System.out.println("- Para abrir el cofre X se unen la pista 1, un guion y la pista 2. Un intento fallido cuesta 1.");
+        System.out.println("- Gana quien sume más puntos. Si empatan, quien entregó más reliquias.");
+    }
+
     /** Muestra la cabecera del turno: partida, ronda, jugador, posicion, puntos, acciones e inventario. */
     public void mostrarEstadoTurno(Partida partida) {
         Participante actual = partida.getTurnoActual();

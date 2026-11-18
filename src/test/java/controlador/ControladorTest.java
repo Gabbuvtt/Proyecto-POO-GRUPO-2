@@ -19,6 +19,7 @@ import vista.VistaConsola;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,6 +53,55 @@ class ControladorTest {
                 throw new IllegalStateException("La partida no existe");
             }
             return new ContenidoTemplo(new Reliquia("REL-01", 2), new Pista(1, "ORBITA"));
+        }
+
+        boolean disponible = true;
+        boolean aliasRepetido = false;
+        int partidasCreadas = 0;
+        Partida partidaGuardada;
+
+        @Override
+        public boolean apiDisponible() {
+            return disponible;
+        }
+
+        @Override
+        public String registrarJugador(String nombre, String alias) {
+            if (aliasRepetido) {
+                throw new IllegalStateException("Ya existe un jugador con el alias " + alias);
+            }
+            return "J3";
+        }
+
+        @Override
+        public Jugador buscarJugadorPorAlias(String alias) {
+            if (alias.equals("nadie")) {
+                return null;
+            }
+            return new Jugador("ID-" + alias, alias, alias);
+        }
+
+        @Override
+        public String crearPartida(String jugador1, String jugador2) {
+            partidasCreadas++;
+            return partidaGuardada.getPartidaId();
+        }
+
+        @Override
+        public ArrayList<ResumenPartida> listarPartidas(String jugadorId) {
+            ArrayList<ResumenPartida> lista = new ArrayList<>();
+            lista.add(new ResumenPartida(partidaGuardada.getPartidaId(), "ana_ucab, luis_ucab", "EN_CURSO", 1));
+            return lista;
+        }
+
+        @Override
+        public Partida cargarPartida(String partidaId) {
+            return partidaGuardada;
+        }
+
+        @Override
+        public EstadisticasJugador obtenerEstadisticas(String jugadorId) {
+            return new EstadisticasJugador(1, 1, 8, 3);
         }
     }
 
@@ -228,5 +278,82 @@ class ControladorTest {
         assertEquals(3, partida.getAccionesRestantes());
         assertEquals(0, partida.getTurnoActual().getInventario().getReliquias().size());
         assertTrue(salida().contains("No se pudo consultar el templo en la API: La partida no existe"));
+    }
+
+    @Test
+    void sinApiMuestraUnMensajeYTermina() {
+        almacen.disponible = false;
+        controlador("").iniciar();
+
+        assertTrue(salida().contains("La API no esta disponible"));
+    }
+
+    @Test
+    void registrarJugadorMuestraSuId() {
+        controlador("1\nAna Perez\nana_ucab\n0\n").iniciar();
+
+        assertTrue(salida().contains("Jugador creado: J3"));
+    }
+
+    @Test
+    void aliasRepetidoMuestraElErrorYVuelveAlMenu() {
+        almacen.aliasRepetido = true;
+        controlador("1\nAna Perez\nana_ucab\n0\n").iniciar();
+
+        String texto = salida();
+        assertTrue(texto.contains("Error: Ya existe un jugador con el alias ana_ucab"));
+        assertTrue(texto.indexOf("1. Registrar jugador") != texto.lastIndexOf("1. Registrar jugador"));
+    }
+
+    @Test
+    void nuevaPartidaRechazaAlMismoJugadorDosVeces() {
+        controlador("2\nana_ucab\nana_ucab\n0\n").iniciar();
+
+        assertTrue(salida().contains("Los dos jugadores deben ser distintos."));
+        assertEquals(0, almacen.partidasCreadas);
+    }
+
+    @Test
+    void nuevaPartidaMuestraElOrdenYEmpiezaAJugar() {
+        almacen.partidaGuardada = partidaNueva();
+        // crea la partida, guarda y sale del juego, y sale del menu
+        controlador("2\nana_ucab\nluis_ucab\n0\n0\n").iniciar();
+
+        String texto = salida();
+        assertEquals(1, almacen.partidasCreadas);
+        assertTrue(texto.contains("Partida: EX-RED-01 | Campamento: C3"));
+        assertTrue(texto.contains("Orden sorteado: Ana, Luis | Ronda: 1 de 8"));
+        assertTrue(texto.contains("Partida guardada. ¡Hasta pronto!"));
+    }
+
+    @Test
+    void cargarPartidaSigueConElMismoTurno() {
+        Partida partida = partidaNueva();
+        partida.consumirAcciones(2);
+        almacen.partidaGuardada = partida;
+        // elige la partida 1, guarda y sale, y sale del menu
+        controlador("3\nana_ucab\n1\n0\n0\n").iniciar();
+
+        String texto = salida();
+        assertTrue(texto.contains("EX-RED-01 | ana_ucab, luis_ucab | EN_CURSO | Ronda 1"));
+        assertTrue(texto.contains("Acciones: 1"));
+        assertEquals(1, partida.getAccionesRestantes());
+    }
+
+    @Test
+    void estadisticasMuestraLosDatosDelJugador() {
+        controlador("4\nana_ucab\n0\n").iniciar();
+
+        String texto = salida();
+        assertTrue(texto.contains("ESTADÍSTICAS DE ANA_UCAB"));
+        assertTrue(texto.contains("Victorias: 1"));
+        assertTrue(texto.contains("Puntos acumulados: 8"));
+    }
+
+    @Test
+    void aliasInexistenteAvisaYVuelveAlMenu() {
+        controlador("4\nnadie\n0\n").iniciar();
+
+        assertTrue(salida().contains("No existe un jugador con el alias nadie."));
     }
 }
