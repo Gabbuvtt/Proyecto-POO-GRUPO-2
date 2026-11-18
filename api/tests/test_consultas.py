@@ -1,4 +1,6 @@
 import copy
+import os
+import tempfile
 import unittest
 
 import almacen
@@ -11,11 +13,16 @@ from tablero import TipoCasilla, a_coordenada, buscar_casillas
 class PruebasConsultas(unittest.TestCase):
 
     def setUp(self):
-        almacen.partidas.clear()
-        almacen.solicitudes.clear()
+        self.temp_dir = tempfile.TemporaryDirectory()
+        almacen.usar_archivo(os.path.join(self.temp_dir.name, "expedicion.json"))
+        almacen.registrar_jugador("Ana Perez", "ana_ucab")
+        almacen.registrar_jugador("Luis Gomez", "luis_ucab")
         peticion = PeticionPartida(requestId="solicitud-001", jugadores=["J1", "J2"])
         self.partida_id = crear_partida(peticion)["partidaId"]
         self.partida = almacen.buscar_partida(self.partida_id)
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
 
     def templo_sin_pista(self):
         for posicion in buscar_casillas(self.partida["tablero"], TipoCasilla.TEMPLO):

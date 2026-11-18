@@ -41,3 +41,4 @@ build/
 ### Python ###
 venv/
 __pycache__/
+api/datos/

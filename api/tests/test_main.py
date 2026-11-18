@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 from unittest import mock
 
@@ -15,8 +17,14 @@ def peticion(jugadores, request_id="solicitud-001"):
 class PruebasCrearPartida(unittest.TestCase):
 
     def setUp(self):
-        almacen.partidas.clear()
-        almacen.solicitudes.clear()
+        self.temp_dir = tempfile.TemporaryDirectory()
+        almacen.usar_archivo(os.path.join(self.temp_dir.name, "expedicion.json"))
+        almacen.registrar_jugador("Ana Perez", "ana_ucab")
+        almacen.registrar_jugador("Luis Gomez", "luis_ucab")
+        almacen.registrar_jugador("Maria Diaz", "maria_ucab")
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
 
     def test_crea_partida_publica(self):
         respuesta = crear_partida(peticion(["J1", "J2"]))

@@ -1,22 +1,51 @@
+import re
+
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
 from almacen import (
+    ErrorAlmacenamiento,
+    buscar_jugador,
+    buscar_jugador_por_alias,
     buscar_partida,
     buscar_solicitud,
+    guardar_estado,
     guardar_partida,
     guardar_solicitud,
     jugador_existe,
+    listar_jugadores,
+    listar_partidas,
     nuevo_partida_id,
     partida_anterior,
+    registrar_jugador,
 )
-from modelos import ContenidoTemplo, Error, PaqueteCofre, PartidaPublica, PeticionPartida
+from modelos import (
+    ConfirmacionGuardado,
+    ContenidoTemplo,
+    Error,
+    Estadisticas,
+    JugadorRegistrado,
+    PaqueteCofre,
+    PartidaGuardada,
+    PartidaPublica,
+    PeticionEstado,
+    PeticionJugador,
+    PeticionPartida,
+    ResumenPartida,
+    Salud,
+)
 from partidas import GeneracionFallida, generar_partida
 from tablero import TipoCasilla, desde_coordenada
 
 JUGADORES_POR_PARTIDA = 2
+VERSION_CONTRATO = 2
+PATRON_NOMBRE = re.compile(r"^.{1,80}$")
+PATRON_ALIAS = re.compile(r"^[A-Za-z0-9_-]{3,20}$")
+MAX_RONDAS = 8
+MAX_ACCIONES = 3
+ESTADOS_VALIDOS = ("EN_CURSO", "FINALIZADA")
 
 
 class ErrorApi(Exception):
@@ -38,6 +67,14 @@ def manejar_error_api(request: Request, error: ErrorApi):
     )
 
 
+@app.exception_handler(ErrorAlmacenamiento)
+def manejar_error_almacenamiento(request: Request, error: ErrorAlmacenamiento):
+    return JSONResponse(
+        status_code=503,
+        content={"codigo": "ALMACENAMIENTO_NO_DISPONIBLE", "mensaje": str(error)},
+    )
+
+
 @app.exception_handler(RequestValidationError)
 def manejar_cuerpo_invalido(request: Request, error: RequestValidationError):
     # pydantic devuelve 422, el enunciado pide 400
@@ -55,21 +92,119 @@ def validar_jugadores(jugadores):
             raise ErrorApi(404, "JUGADOR_NO_ENCONTRADO", "No existe el jugador " + jugador)
 
 
-def a_publica(partida):
-    # solo lo que el cliente puede ver: sin reliquias, pistas ni paquete
+def _tablero_a_terreno(tablero):
     terreno = []
-    for fila in partida["tablero"]:
+    for fila in tablero:
         letras = []
         for casilla in fila:
             letras.append(casilla.value)
         terreno.append(letras)
+    return terreno
+
+
+def a_publica(partida):
+    # solo lo que el cliente puede ver: sin reliquias, pistas ni paquete
     return {
         "partidaId": partida["partidaId"],
-        "terreno": terreno,
+        "terreno": _tablero_a_terreno(partida["tablero"]),
         "participantes": partida["jugadores"],
         "orden": partida["orden"],
         "posiciones": partida["posiciones"],
         "estado": partida["estado"],
+    }
+
+
+@rutas.get(
+    "/salud",
+    response_model=Salud,
+    summary="Comprueba la salud del servicio",
+    description="Indica si la API esta disponible y la version del contrato.",
+    responses={
+        400: {"model": Error, "description": "Peticion invalida"},
+    },
+)
+def consultar_salud():
+    return {"disponible": True, "versionContrato": VERSION_CONTRATO}
+
+
+@rutas.post(
+    "/jugadores",
+    status_code=201,
+    response_model=JugadorRegistrado,
+    summary="Registra un jugador",
+    description="Crea un nuevo jugador con nombre y alias unico (sin distinguir mayusculas).",
+    responses={
+        400: {"model": Error, "description": "Nombre o alias invalido"},
+        409: {"model": Error, "description": "El alias ya esta registrado"},
+        503: {"model": Error, "description": "No se pudo guardar en almacenamiento"},
+    },
+)
+def crear_jugador(peticion: PeticionJugador):
+    nombre = peticion.nombre.strip()
+    if not PATRON_NOMBRE.match(nombre):
+        raise ErrorApi(400, "NOMBRE_INVALIDO", "El nombre debe tener entre 1 y 80 caracteres")
+    if not PATRON_ALIAS.match(peticion.alias):
+        raise ErrorApi(
+            400,
+            "ALIAS_INVALIDO",
+            "El alias debe tener entre 3 y 20 caracteres (letras, digitos, guion o guion bajo)",
+        )
+    if buscar_jugador_por_alias(peticion.alias) is not None:
+        raise ErrorApi(409, "ALIAS_REPETIDO", "Ya existe un jugador con el alias " + peticion.alias)
+    return registrar_jugador(nombre, peticion.alias)
+
+
+@rutas.get(
+    "/jugadores",
+    response_model=list[JugadorRegistrado],
+    summary="Lista jugadores",
+    description="Devuelve los jugadores registrados, con filtro opcional por alias.",
+    responses={
+        400: {"model": Error, "description": "Parametro de consulta invalido"},
+    },
+)
+def obtener_jugadores(alias: str | None = None):
+    return listar_jugadores(alias)
+
+
+@rutas.get(
+    "/jugadores/{jugador_id}/estadisticas",
+    response_model=Estadisticas,
+    summary="Consulta estadisticas de un jugador",
+    description="Calcula partidas finalizadas, victorias, puntos acumulados y reliquias entregadas.",
+    responses={
+        400: {"model": Error, "description": "Peticion invalida"},
+        404: {"model": Error, "description": "Jugador inexistente"},
+    },
+)
+def consultar_estadisticas(jugador_id: str):
+    if buscar_jugador(jugador_id) is None:
+        raise ErrorApi(404, "JUGADOR_NO_ENCONTRADO", "No existe el jugador " + jugador_id)
+
+    finalizadas = 0
+    victorias = 0
+    puntos = 0
+    reliquias = 0
+
+    for partida in listar_partidas(jugador_id):
+        estado = partida["estado"]
+        if estado["estado"] != "FINALIZADA":
+            continue
+        finalizadas += 1
+        if jugador_id in estado["ganadores"]:
+            victorias += 1
+        for estado_jugador in estado["jugadores"]:
+            if estado_jugador["jugadorId"] == jugador_id:
+                puntos += estado_jugador["puntos"]
+                reliquias += len(estado_jugador["entregadas"])
+                break
+
+    return {
+        "jugadorId": jugador_id,
+        "partidasFinalizadas": finalizadas,
+        "victorias": victorias,
+        "puntosAcumulados": puntos,
+        "reliquiasEntregadas": reliquias,
     }
 
 
@@ -107,11 +242,130 @@ def crear_partida(peticion: PeticionPartida):
     return a_publica(partida)
 
 
+@rutas.get(
+    "/partidas",
+    response_model=list[ResumenPartida],
+    summary="Lista partidas",
+    description="Devuelve el resumen de las partidas registradas, con filtro opcional por jugadorId.",
+    responses={
+        400: {"model": Error, "description": "Parametro de consulta invalido"},
+    },
+)
+def obtener_partidas(jugadorId: str | None = None):
+    resumenes = []
+    for partida in listar_partidas(jugadorId):
+        jugadores_resumen = []
+        for jugador_id in partida["jugadores"]:
+            jugador = buscar_jugador(jugador_id)
+            alias = jugador["alias"] if jugador is not None else jugador_id
+            jugadores_resumen.append({"jugadorId": jugador_id, "alias": alias})
+        resumenes.append({
+            "partidaId": partida["partidaId"],
+            "jugadores": jugadores_resumen,
+            "estado": partida["estado"]["estado"],
+            "ronda": partida["estado"]["ronda"],
+            "revision": partida["revision"],
+        })
+    return resumenes
+
+
 def obtener_partida(partida_id):
     partida = buscar_partida(partida_id)
     if partida is None:
         raise ErrorApi(404, "PARTIDA_NO_ENCONTRADA", "No existe la partida " + partida_id)
     return partida
+
+
+@rutas.get(
+    "/partidas/{partida_id}",
+    response_model=PartidaGuardada,
+    summary="Consulta una partida guardada",
+    description="Devuelve la configuracion publica inmutable y el ultimo snapshot guardado con su revision.",
+    responses={
+        400: {"model": Error, "description": "Peticion invalida"},
+        404: {"model": Error, "description": "Partida inexistente"},
+    },
+)
+def consultar_partida(partida_id: str):
+    partida = obtener_partida(partida_id)
+    return {
+        "partidaId": partida["partidaId"],
+        "terreno": _tablero_a_terreno(partida["tablero"]),
+        "participantes": partida["jugadores"],
+        "orden": partida["orden"],
+        "campamento": partida["campamento"],
+        "cofre": partida["cofre"],
+        "revision": partida["revision"],
+        "estado": partida["estado"],
+    }
+
+
+def _validar_estado_partida(partida, estado):
+    if estado["estado"] not in ESTADOS_VALIDOS:
+        raise ErrorApi(400, "ESTADO_INVALIDO", "El estado de la partida no es valido")
+    if estado["ronda"] < 1 or estado["ronda"] > MAX_RONDAS:
+        raise ErrorApi(400, "ESTADO_INVALIDO", "La ronda debe estar entre 1 y 8")
+    if estado["accionesRestantes"] < 0 or estado["accionesRestantes"] > MAX_ACCIONES:
+        raise ErrorApi(400, "ESTADO_INVALIDO", "Las acciones restantes deben estar entre 0 y 3")
+    if estado["indiceJugadorActual"] not in (0, 1):
+        raise ErrorApi(400, "ESTADO_INVALIDO", "El indice de jugador actual debe ser 0 o 1")
+
+    ids_estado = []
+    for estado_jugador in estado["jugadores"]:
+        ids_estado.append(estado_jugador["jugadorId"])
+    if len(ids_estado) != JUGADORES_POR_PARTIDA or sorted(ids_estado) != sorted(partida["jugadores"]):
+        raise ErrorApi(400, "ESTADO_INVALIDO", "Los jugadores del estado no coinciden con la partida")
+
+    if estado["estado"] == "FINALIZADA":
+        if estado["ronda"] != MAX_RONDAS or estado["accionesRestantes"] != 0:
+            raise ErrorApi(
+                400,
+                "ESTADO_INVALIDO",
+                "Una partida finalizada debe estar en ronda 8 con 0 acciones restantes",
+            )
+
+
+@rutas.put(
+    "/partidas/{partida_id}/estado",
+    response_model=ConfirmacionGuardado,
+    summary="Guarda el estado de una partida",
+    description="Actualiza el snapshot de la partida usando control optimista con revisionBase e idempotencia.",
+    responses={
+        400: {"model": Error, "description": "Estado o datos invalidos"},
+        404: {"model": Error, "description": "Partida inexistente"},
+        409: {"model": Error, "description": "Revision incompatible o partida finalizada"},
+        503: {"model": Error, "description": "No se pudo guardar en almacenamiento"},
+    },
+)
+def guardar_estado_partida(partida_id: str, peticion: PeticionEstado):
+    partida = obtener_partida(partida_id)
+    estado = peticion.estado.model_dump()
+    _validar_estado_partida(partida, estado)
+
+    # reintento identico, misma confirmacion
+    ultimo = partida.get("ultimoGuardado")
+    if (
+        ultimo is not None
+        and ultimo["revisionBase"] == peticion.revisionBase
+        and ultimo["estado"] == estado
+    ):
+        return ultimo["confirmacion"]
+
+    if peticion.revisionBase != partida["revision"]:
+        raise ErrorApi(
+            409,
+            "REVISION_INCOMPATIBLE",
+            "La revision base no coincide con la revision actual de la partida",
+        )
+
+    if partida["estado"]["estado"] == "FINALIZADA":
+        raise ErrorApi(
+            409,
+            "PARTIDA_FINALIZADA",
+            "La partida ya finalizo y no admite mas cambios",
+        )
+
+    return guardar_estado(partida_id, peticion.revisionBase, estado)
 
 
 def buscar_pista(partida, coord):

@@ -68,3 +68,62 @@ class PartidaPublica(BaseModel):
     orden: list[str]
     posiciones: dict[str, str]
     estado: EstadoPartida
+
+
+class Salud(BaseModel):
+    disponible: bool
+    versionContrato: int
+
+
+class PeticionJugador(BaseModel):
+    nombre: str
+    alias: str
+
+
+class JugadorRegistrado(BaseModel):
+    jugadorId: str
+    nombre: str
+    alias: str
+
+
+class Estadisticas(BaseModel):
+    jugadorId: str
+    partidasFinalizadas: int
+    victorias: int
+    puntosAcumulados: int
+    reliquiasEntregadas: int
+
+
+class JugadorResumen(BaseModel):
+    jugadorId: str
+    alias: str
+
+
+class ResumenPartida(BaseModel):
+    partidaId: str
+    jugadores: list[JugadorResumen]
+    estado: str
+    ronda: int
+    revision: int
+
+
+class PartidaGuardada(BaseModel):
+    partidaId: str
+    terreno: list[list[str]]
+    participantes: list[str]
+    orden: list[str]
+    campamento: str
+    cofre: str
+    revision: int
+    estado: EstadoPartida
+
+
+class PeticionEstado(BaseModel):
+    revisionBase: int
+    estado: EstadoPartida
+
+
+class ConfirmacionGuardado(BaseModel):
+    partidaId: str
+    revision: int
+    guardado: bool

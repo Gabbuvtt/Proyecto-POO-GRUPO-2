@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 
 import almacen
@@ -13,14 +15,20 @@ class PruebasCA02(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        almacen.partidas.clear()
-        almacen.solicitudes.clear()
+        cls.temp_dir = tempfile.TemporaryDirectory()
+        almacen.usar_archivo(os.path.join(cls.temp_dir.name, "expedicion.json"))
+        almacen.registrar_jugador("Ana Perez", "ana_ucab")
+        almacen.registrar_jugador("Luis Gomez", "luis_ucab")
         # tres partidas seguidas del mismo par
         cls.partidas = []
         for i in range(PARTIDAS_A_CREAR):
             peticion = PeticionPartida(requestId="ca02-" + str(i), jugadores=["J1", "J2"])
             partida_id = crear_partida(peticion)["partidaId"]
             cls.partidas.append(almacen.buscar_partida(partida_id))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.temp_dir.cleanup()
 
     def test_se_crean_tres_partidas_distintas(self):
         ids = set()

@@ -1,0 +1,468 @@
+{
+  "info": {
+    "name": "Expedición: La Isla de las Reliquias — API v1 (Contrato v2)",
+    "description": "Colección oficial con los 10 endpoints del contrato v2, casos de éxito y ejemplos de error.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. GET /salud",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Accept", "value": "application/json"}],
+        "url": {
+          "raw": "{{base_url}}/salud",
+          "host": ["{{base_url}}"],
+          "path": ["salud"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - Servicio disponible",
+          "originalRequest": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/salud", "host": ["{{base_url}}"], "path": ["salud"]}
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"disponible\": true,\n  \"versionContrato\": 2\n}"
+        }
+      ]
+    },
+    {
+      "name": "2. POST /jugadores (Registrar jugador)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"},
+          {"key": "Accept", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Ana Pérez\",\n  \"alias\": \"ana_ucab\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/jugadores",
+          "host": ["{{base_url}}"],
+          "path": ["jugadores"]
+        }
+      },
+      "response": [
+        {
+          "name": "201 Created - Jugador registrado",
+          "originalRequest": {
+            "method": "POST",
+            "body": {"mode": "raw", "raw": "{\n  \"nombre\": \"Ana Pérez\",\n  \"alias\": \"ana_ucab\"\n}"},
+            "url": {"raw": "{{base_url}}/jugadores", "host": ["{{base_url}}"], "path": ["jugadores"]}
+          },
+          "status": "Created",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"jugadorId\": \"J1\",\n  \"nombre\": \"Ana Pérez\",\n  \"alias\": \"ana_ucab\"\n}"
+        },
+        {
+          "name": "400 Bad Request - Alias inválido",
+          "originalRequest": {
+            "method": "POST",
+            "body": {"mode": "raw", "raw": "{\n  \"nombre\": \"Ana Pérez\",\n  \"alias\": \"a\"\n}"},
+            "url": {"raw": "{{base_url}}/jugadores", "host": ["{{base_url}}"], "path": ["jugadores"]}
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"ALIAS_INVALIDO\",\n  \"mensaje\": \"El alias debe tener entre 3 y 20 caracteres (letras, digitos, guion o guion bajo)\"\n}"
+        },
+        {
+          "name": "409 Conflict - Alias repetido",
+          "originalRequest": {
+            "method": "POST",
+            "body": {"mode": "raw", "raw": "{\n  \"nombre\": \"Otra Ana\",\n  \"alias\": \"ANA_UCAB\"\n}"},
+            "url": {"raw": "{{base_url}}/jugadores", "host": ["{{base_url}}"], "path": ["jugadores"]}
+          },
+          "status": "Conflict",
+          "code": 409,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"ALIAS_REPETIDO\",\n  \"mensaje\": \"Ya existe un jugador con el alias ANA_UCAB\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "3. GET /jugadores (Listar o filtrar por alias)",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Accept", "value": "application/json"}],
+        "url": {
+          "raw": "{{base_url}}/jugadores?alias=ana_ucab",
+          "host": ["{{base_url}}"],
+          "path": ["jugadores"],
+          "query": [{"key": "alias", "value": "ana_ucab"}]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - Lista de jugadores",
+          "originalRequest": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/jugadores", "host": ["{{base_url}}"], "path": ["jugadores"]}
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "[\n  {\n    \"jugadorId\": \"J1\",\n    \"nombre\": \"Ana Pérez\",\n    \"alias\": \"ana_ucab\"\n  }\n]"
+        }
+      ]
+    },
+    {
+      "name": "4. POST /partidas (Crear partida)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"},
+          {"key": "Accept", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"solicitud-001\",\n  \"jugadores\": [\"J1\", \"J2\"]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/partidas",
+          "host": ["{{base_url}}"],
+          "path": ["partidas"]
+        }
+      },
+      "response": [
+        {
+          "name": "201 Created - Partida creada",
+          "originalRequest": {
+            "method": "POST",
+            "body": {"mode": "raw", "raw": "{\n  \"requestId\": \"solicitud-001\",\n  \"jugadores\": [\"J1\", \"J2\"]\n}"},
+            "url": {"raw": "{{base_url}}/partidas", "host": ["{{base_url}}"], "path": ["partidas"]}
+          },
+          "status": "Created",
+          "code": 201,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"partidaId\": \"EX-001\",\n  \"terreno\": [\n    [\"S\", \"T\", \"S\", \"P\", \"S\"],\n    [\"S\", \"S\", \"S\", \"X\", \"S\"],\n    [\"S\", \"T\", \"C\", \"S\", \"S\"],\n    [\"P\", \"S\", \"T\", \"S\", \"S\"],\n    [\"T\", \"S\", \"P\", \"S\", \"P\"]\n  ],\n  \"participantes\": [\"J1\", \"J2\"],\n  \"orden\": [\"J1\", \"J2\"],\n  \"posiciones\": {\"J1\": \"C3\", \"J2\": \"C3\"},\n  \"estado\": {\n    \"estado\": \"EN_CURSO\",\n    \"ronda\": 1,\n    \"indiceJugadorActual\": 0,\n    \"accionesRestantes\": 3,\n    \"jugadores\": [\n      {\"jugadorId\": \"J1\", \"posicion\": \"C3\", \"puntos\": 0, \"inventario\": [], \"entregadas\": []},\n      {\"jugadorId\": \"J2\", \"posicion\": \"C3\", \"puntos\": 0, \"inventario\": [], \"entregadas\": []}\n    ],\n    \"templosExplorados\": [],\n    \"pistas\": [],\n    \"cofreAbierto\": false,\n    \"ganadores\": []\n  }\n}"
+        },
+        {
+          "name": "400 Bad Request - Jugadores repetidos",
+          "originalRequest": {
+            "method": "POST",
+            "body": {"mode": "raw", "raw": "{\n  \"requestId\": \"solicitud-002\",\n  \"jugadores\": [\"J1\", \"J1\"]\n}"},
+            "url": {"raw": "{{base_url}}/partidas", "host": ["{{base_url}}"], "path": ["partidas"]}
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"JUGADORES_INVALIDOS\",\n  \"mensaje\": \"La partida necesita 2 jugadores distintos\"\n}"
+        },
+        {
+          "name": "404 Not Found - Jugador inexistente",
+          "originalRequest": {
+            "method": "POST",
+            "body": {"mode": "raw", "raw": "{\n  \"requestId\": \"solicitud-003\",\n  \"jugadores\": [\"J1\", \"J99\"]\n}"},
+            "url": {"raw": "{{base_url}}/partidas", "host": ["{{base_url}}"], "path": ["partidas"]}
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"JUGADOR_NO_ENCONTRADO\",\n  \"mensaje\": \"No existe el jugador J99\"\n}"
+        },
+        {
+          "name": "409 Conflict - requestId conflictivo",
+          "originalRequest": {
+            "method": "POST",
+            "body": {"mode": "raw", "raw": "{\n  \"requestId\": \"solicitud-001\",\n  \"jugadores\": [\"J1\", \"J3\"]\n}"},
+            "url": {"raw": "{{base_url}}/partidas", "host": ["{{base_url}}"], "path": ["partidas"]}
+          },
+          "status": "Conflict",
+          "code": 409,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"REQUEST_ID_CONFLICTIVO\",\n  \"mensaje\": \"El requestId ya se uso con otro cuerpo\"\n}"
+        },
+        {
+          "name": "503 Service Unavailable - Generación fallida",
+          "originalRequest": {
+            "method": "POST",
+            "body": {"mode": "raw", "raw": "{\n  \"requestId\": \"solicitud-004\",\n  \"jugadores\": [\"J1\", \"J2\"]\n}"},
+            "url": {"raw": "{{base_url}}/partidas", "host": ["{{base_url}}"], "path": ["partidas"]}
+          },
+          "status": "Service Unavailable",
+          "code": 503,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"GENERACION_FALLIDA\",\n  \"mensaje\": \"No se pudo generar un tablero valido\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "5. GET /partidas (Listar partidas)",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Accept", "value": "application/json"}],
+        "url": {
+          "raw": "{{base_url}}/partidas?jugadorId=J1",
+          "host": ["{{base_url}}"],
+          "path": ["partidas"],
+          "query": [{"key": "jugadorId", "value": "J1"}]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - Resúmenes de partidas",
+          "originalRequest": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/partidas", "host": ["{{base_url}}"], "path": ["partidas"]}
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "[\n  {\n    \"partidaId\": \"EX-001\",\n    \"jugadores\": [\n      {\"jugadorId\": \"J1\", \"alias\": \"ana_ucab\"},\n      {\"jugadorId\": \"J2\", \"alias\": \"luis_ucab\"}\n    ],\n    \"estado\": \"EN_CURSO\",\n    \"ronda\": 1,\n    \"revision\": 1\n  }\n]"
+        }
+      ]
+    },
+    {
+      "name": "6. GET /partidas/{id} (Consultar partida)",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Accept", "value": "application/json"}],
+        "url": {
+          "raw": "{{base_url}}/partidas/EX-001",
+          "host": ["{{base_url}}"],
+          "path": ["partidas", "EX-001"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - Partida encontrada",
+          "originalRequest": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/partidas/EX-001", "host": ["{{base_url}}"], "path": ["partidas", "EX-001"]}
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"partidaId\": \"EX-001\",\n  \"terreno\": [[\"S\", \"T\", \"S\", \"P\", \"S\"], [\"S\", \"S\", \"S\", \"X\", \"S\"], [\"S\", \"T\", \"C\", \"S\", \"S\"], [\"P\", \"S\", \"T\", \"S\", \"S\"], [\"T\", \"S\", \"P\", \"S\", \"P\"]],\n  \"participantes\": [\"J1\", \"J2\"],\n  \"orden\": [\"J1\", \"J2\"],\n  \"campamento\": \"C3\",\n  \"cofre\": \"D2\",\n  \"revision\": 1,\n  \"estado\": {\n    \"estado\": \"EN_CURSO\",\n    \"ronda\": 1,\n    \"indiceJugadorActual\": 0,\n    \"accionesRestantes\": 3,\n    \"jugadores\": [\n      {\"jugadorId\": \"J1\", \"posicion\": \"C3\", \"puntos\": 0, \"inventario\": [], \"entregadas\": []},\n      {\"jugadorId\": \"J2\", \"posicion\": \"C3\", \"puntos\": 0, \"inventario\": [], \"entregadas\": []}\n    ],\n    \"templosExplorados\": [],\n    \"pistas\": [],\n    \"cofreAbierto\": false,\n    \"ganadores\": []\n  }\n}"
+        },
+        {
+          "name": "404 Not Found - Partida inexistente",
+          "originalRequest": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/partidas/EX-999", "host": ["{{base_url}}"], "path": ["partidas", "EX-999"]}
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"PARTIDA_NO_ENCONTRADA\",\n  \"mensaje\": \"No existe la partida EX-999\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "7. GET /partidas/{id}/templos/{coord}",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Accept", "value": "application/json"}],
+        "url": {
+          "raw": "{{base_url}}/partidas/EX-001/templos/B3",
+          "host": ["{{base_url}}"],
+          "path": ["partidas", "EX-001", "templos", "B3"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - Contenido del templo",
+          "originalRequest": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/partidas/EX-001/templos/B3", "host": ["{{base_url}}"], "path": ["partidas", "EX-001", "templos", "B3"]}
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"coordenada\": \"B3\",\n  \"reliquia\": {\"reliquiaId\": \"REL-01\", \"valor\": 3},\n  \"pista\": {\"indice\": 1, \"fragmento\": \"ORBITA\"}\n}"
+        },
+        {
+          "name": "400 Bad Request - No es templo",
+          "originalRequest": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/partidas/EX-001/templos/C3", "host": ["{{base_url}}"], "path": ["partidas", "EX-001", "templos", "C3"]}
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"NO_ES_TEMPLO\",\n  \"mensaje\": \"La casilla C3 no es un templo\"\n}"
+        },
+        {
+          "name": "404 Not Found - Partida inexistente",
+          "originalRequest": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/partidas/EX-999/templos/B3", "host": ["{{base_url}}"], "path": ["partidas", "EX-999", "templos", "B3"]}
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"PARTIDA_NO_ENCONTRADA\",\n  \"mensaje\": \"No existe la partida EX-999\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "8. GET /partidas/{id}/cofre",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Accept", "value": "application/json"}],
+        "url": {
+          "raw": "{{base_url}}/partidas/EX-001/cofre",
+          "host": ["{{base_url}}"],
+          "path": ["partidas", "EX-001", "cofre"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - Paquete cifrado del cofre",
+          "originalRequest": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/partidas/EX-001/cofre", "host": ["{{base_url}}"], "path": ["partidas", "EX-001", "cofre"]}
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"partidaId\": \"EX-001\",\n  \"cofreId\": \"COFRE-01\",\n  \"algoritmo\": \"AES/GCM/NoPadding\",\n  \"kdf\": \"PBKDF2WithHmacSHA256\",\n  \"iteraciones\": 100000,\n  \"longitudClaveBits\": 256,\n  \"saltBase64\": \"xBxRniX+mjbP3gI6qy93zA==\",\n  \"nonceBase64\": \"BVmBDNDCL0Gw5CM6\",\n  \"tagBits\": 128,\n  \"aadBase64\": \"RVgtUkVELTAxfENPRlJFLTAx\",\n  \"cifradoConTagBase64\": \"u/hosFuUuUt+RKGBQV9S/amTmkZd5SwCLtnzyn6/EgT9Y3Nmhs7G9JfRfXMZPce426aLkJRpuGdof1jG0pikC+bkl1DmSNPrLlES17AuJ9UZaWvXl2pgbL84kWXKITU5noqdPQ==\"\n}"
+        },
+        {
+          "name": "404 Not Found - Partida inexistente",
+          "originalRequest": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/partidas/EX-999/cofre", "host": ["{{base_url}}"], "path": ["partidas", "EX-999", "cofre"]}
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"PARTIDA_NO_ENCONTRADA\",\n  \"mensaje\": \"No existe la partida EX-999\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "9. PUT /partidas/{id}/estado",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"},
+          {"key": "Accept", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"revisionBase\": 1,\n  \"estado\": {\n    \"estado\": \"EN_CURSO\",\n    \"ronda\": 1,\n    \"indiceJugadorActual\": 1,\n    \"accionesRestantes\": 3,\n    \"jugadores\": [\n      {\"jugadorId\": \"J1\", \"posicion\": \"C3\", \"puntos\": 0, \"inventario\": [{\"reliquiaId\": \"REL-01\", \"valor\": 3}], \"entregadas\": []},\n      {\"jugadorId\": \"J2\", \"posicion\": \"C3\", \"puntos\": 0, \"inventario\": [], \"entregadas\": []}\n    ],\n    \"templosExplorados\": [\"B3\"],\n    \"pistas\": [{\"indice\": 1, \"fragmento\": \"ORBITA\"}],\n    \"cofreAbierto\": false,\n    \"ganadores\": []\n  }\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/partidas/EX-001/estado",
+          "host": ["{{base_url}}"],
+          "path": ["partidas", "EX-001", "estado"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - Estado guardado",
+          "originalRequest": {
+            "method": "PUT",
+            "url": {"raw": "{{base_url}}/partidas/EX-001/estado", "host": ["{{base_url}}"], "path": ["partidas", "EX-001", "estado"]}
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"partidaId\": \"EX-001\",\n  \"revision\": 2,\n  \"guardado\": true\n}"
+        },
+        {
+          "name": "400 Bad Request - Estado inválido",
+          "originalRequest": {
+            "method": "PUT",
+            "url": {"raw": "{{base_url}}/partidas/EX-001/estado", "host": ["{{base_url}}"], "path": ["partidas", "EX-001", "estado"]}
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"ESTADO_INVALIDO\",\n  \"mensaje\": \"La ronda debe estar entre 1 y 8\"\n}"
+        },
+        {
+          "name": "404 Not Found - Partida inexistente",
+          "originalRequest": {
+            "method": "PUT",
+            "url": {"raw": "{{base_url}}/partidas/EX-999/estado", "host": ["{{base_url}}"], "path": ["partidas", "EX-999", "estado"]}
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"PARTIDA_NO_ENCONTRADA\",\n  \"mensaje\": \"No existe la partida EX-999\"\n}"
+        },
+        {
+          "name": "409 Conflict - Revisión incompatible",
+          "originalRequest": {
+            "method": "PUT",
+            "url": {"raw": "{{base_url}}/partidas/EX-001/estado", "host": ["{{base_url}}"], "path": ["partidas", "EX-001", "estado"]}
+          },
+          "status": "Conflict",
+          "code": 409,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"REVISION_INCOMPATIBLE\",\n  \"mensaje\": \"La revision base no coincide con la revision actual de la partida\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "10. GET /jugadores/{id}/estadisticas",
+      "request": {
+        "method": "GET",
+        "header": [{"key": "Accept", "value": "application/json"}],
+        "url": {
+          "raw": "{{base_url}}/jugadores/J1/estadisticas",
+          "host": ["{{base_url}}"],
+          "path": ["jugadores", "J1", "estadisticas"]
+        }
+      },
+      "response": [
+        {
+          "name": "200 OK - Estadísticas del jugador",
+          "originalRequest": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/jugadores/J1/estadisticas", "host": ["{{base_url}}"], "path": ["jugadores", "J1", "estadisticas"]}
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"jugadorId\": \"J1\",\n  \"partidasFinalizadas\": 1,\n  \"victorias\": 1,\n  \"puntosAcumulados\": 8,\n  \"reliquiasEntregadas\": 3\n}"
+        },
+        {
+          "name": "404 Not Found - Jugador inexistente",
+          "originalRequest": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/jugadores/J99/estadisticas", "host": ["{{base_url}}"], "path": ["jugadores", "J99", "estadisticas"]}
+          },
+          "status": "Not Found",
+          "code": 404,
+          "_postman_previewlanguage": "json",
+          "header": [{"key": "Content-Type", "value": "application/json"}],
+          "body": "{\n  \"codigo\": \"JUGADOR_NO_ENCONTRADO\",\n  \"mensaje\": \"No existe el jugador J99\"\n}"
+        }
+      ]
+    }
+  ]
+}
