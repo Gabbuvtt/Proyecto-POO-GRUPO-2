@@ -39,6 +39,9 @@ public class Controlador {
     // Impide continuar jugando si un guardado falla.
     private boolean guardadoPendiente = false;
 
+    // la API tiene una revision mas nueva, ya no se puede guardar
+    private boolean conflictoVersion = false;
+
     /** Constructor que utiliza el reloj del computador. */
     public Controlador(
             VistaConsola vista,
@@ -235,6 +238,7 @@ public class Controlador {
 
         inicioTurno = reloj.getAsLong();
         guardadoPendiente = false;
+        conflictoVersion = false;
 
         boolean salir = false;
 
@@ -597,9 +601,14 @@ public class Controlador {
 
     /**
      * Guarda y sale solamente si el almacen
-     * confirma el guardado.
+     * confirma el guardado. Con conflicto de versiones sale sin guardar.
      */
     private boolean guardarYSalir(Partida partida) {
+
+        // reintentar no sirve, la API ya tiene otra version
+        if (conflictoVersion) {
+            return salirSinGuardar();
+        }
 
         boolean eraReintento = guardadoPendiente;
 
@@ -620,6 +629,10 @@ public class Controlador {
             return true;
         }
 
+        if (conflictoVersion) {
+            return salirSinGuardar();
+        }
+
         vista.mostrarError(
                 "No se pudo guardar la partida, "
                         + "por eso no se cerró el juego. "
@@ -627,6 +640,16 @@ public class Controlador {
         );
 
         return false;
+    }
+
+    /** Vuelve al menu principal sin guardar cuando hay conflicto de versiones. */
+    private boolean salirSinGuardar() {
+        vista.mostrarMensaje(
+                "Se vuelve al menu sin guardar. Los cambios desde el"
+                        + " ultimo guardado se pierden. Carga la partida"
+                        + " de nuevo para seguir desde la version de la API."
+        );
+        return true;
     }
 
     /**
@@ -693,6 +716,7 @@ public class Controlador {
     private boolean intentarGuardar(Partida partida) {
 
         boolean guardadoCorrecto;
+        conflictoVersion = false;
 
         try {
 
@@ -703,10 +727,11 @@ public class Controlador {
             vista.mostrarError(
                     "Conflicto de versiones: " + e.getMessage()
                             + " Otro proceso guardo esta partida antes."
-                            + " Tus cambios no se guardaron. Cierra el juego"
-                            + " (Ctrl+C) y vuelve a cargar la partida."
+                            + " Tus cambios no se guardaron. Usa la opcion 0"
+                            + " para volver al menu y carga la partida de nuevo."
             );
 
+            conflictoVersion = true;
             guardadoCorrecto = false;
 
         } catch (RuntimeException e) {

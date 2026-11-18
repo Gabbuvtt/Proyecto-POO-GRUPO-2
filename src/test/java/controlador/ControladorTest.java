@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -299,8 +300,30 @@ class ControladorTest {
 
         String texto = salida();
         assertTrue(texto.contains("Error: Conflicto de versiones: La partida tiene una version mas nueva en la API."));
+        assertTrue(texto.contains("Usa la opcion 0 para volver al menu"));
+        assertFalse(texto.contains("Ctrl+C"));
         assertTrue(texto.contains("No puedes realizar acciones mientras haya un guardado pendiente."));
         assertEquals(3, partida.getAccionesRestantes());
+    }
+
+    @Test
+    void conConflictoGuardarYSalirVuelveAlMenuSinGuardar() {
+        almacen.conflicto = true;
+        // guarda (conflicto) y despues 0: tiene que salir sin pedir mas teclas
+        controlador("6\n0\n").jugar(partidaNueva());
+
+        String texto = salida();
+        assertTrue(texto.contains("Se vuelve al menu sin guardar. Los cambios desde el ultimo guardado se pierden."));
+        assertFalse(texto.contains("Partida guardada. ¡Hasta pronto!"));
+        assertEquals(0, almacen.guardados);
+    }
+
+    @Test
+    void siElPrimerGuardarYSalirDaConflictoTambienSale() {
+        almacen.conflicto = true;
+        controlador("0\n").jugar(partidaNueva());
+
+        assertTrue(salida().contains("Se vuelve al menu sin guardar."));
     }
 
     @Test
