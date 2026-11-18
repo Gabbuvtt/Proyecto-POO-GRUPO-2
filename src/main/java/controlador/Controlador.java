@@ -2,15 +2,23 @@
 package controlador;
 
 import modelo.AccionJuego;
+import modelo.Coordenada;
 import modelo.EstadoDePartida;
 import modelo.FabricaAcciones;
+import modelo.Jugador;
 import modelo.Participante;
 import modelo.Partida;
 import modelo.ResultadoAccion;
+import modelo.TipoDeTerreno;
+import servicio.FalloAutenticacionException;
 import servicio.PaqueteCofre;
+import servicio.PaqueteCorruptoException;
 import servicio.ServicioCriptografico;
+import servicio.VectorAnexoB;
+import vista.DatosRegistro;
 import vista.VistaConsola;
 
+import java.util.ArrayList;
 import java.util.function.LongSupplier;
 
 /**
@@ -30,6 +38,9 @@ public class Controlador {
 
     // Impide continuar jugando si un guardado falla.
     private boolean guardadoPendiente = false;
+
+    // la API tiene una revision mas nueva, ya no se puede guardar
+    private boolean conflictoVersion = false;
 
     /** Constructor que utiliza el reloj del computador. */
     public Controlador(
@@ -54,11 +65,180 @@ public class Controlador {
         this.reloj = reloj;
     }
 
+    /** Comprueba la API y muestra el menu principal hasta que el usuario sale. */
+    public void iniciar() {
+
+        if (!almacen.apiDisponible()) {
+            vista.mostrarError(
+                    "La API no esta disponible o usa otra version "
+                            + "del contrato. Iniciala e intenta de nuevo."
+            );
+            return;
+        }
+
+        boolean salir = false;
+
+        while (!salir) {
+
+            int opcion = vista.pedirOpcionMenuPrincipal();
+
+            // si falla una consulta se avisa y se vuelve al menu
+            try {
+                switch (opcion) {
+                    case 1 -> registrarJugador();
+                    case 2 -> nuevaPartida();
+                    case 3 -> cargarPartida();
+                    case 4 -> verEstadisticas();
+                    case 5 -> ayuda();
+                    default -> salir = true;
+                }
+            } catch (RuntimeException e) {
+                vista.mostrarError(e.getMessage());
+            }
+        }
+    }
+
+    /** Pide nombre y alias y registra al jugador en la API. */
+    private void registrarJugador() {
+        DatosRegistro datos = vista.pedirDatosRegistro();
+        String jugadorId = almacen.registrarJugador(
+                datos.nombre(), datos.alias()
+        );
+        vista.mostrarJugadorCreado(jugadorId);
+    }
+
+    /** Pide los dos jugadores, crea la partida y empieza a jugar. */
+    private void nuevaPartida() {
+        vista.mostrarMensaje("");
+        vista.mostrarMensaje("Nueva partida");
+
+        Jugador jugador1 = pedirJugador("Jugador 1: ");
+        if (jugador1 == null) {
+            return;
+        }
+
+        Jugador jugador2 = pedirJugador("Jugador 2: ");
+        if (jugador2 == null) {
+            return;
+        }
+
+        if (jugador1.getJugadorId().equals(jugador2.getJugadorId())) {
+            vista.mostrarError("Los dos jugadores deben ser distintos.");
+            return;
+        }
+
+        String partidaId = almacen.crearPartida(
+                jugador1.getJugadorId(), jugador2.getJugadorId()
+        );
+
+        // se trae completa para tener el campamento y la revision
+        Partida partida = almacen.cargarPartida(partidaId);
+        vista.mostrarPartidaCreada(partida);
+        jugar(partida);
+    }
+
+    /** Lista las partidas de un jugador y abre la que elija. */
+    private void cargarPartida() {
+        Jugador jugador = pedirJugador("Alias: ");
+        if (jugador == null) {
+            return;
+        }
+
+        ArrayList<ResumenPartida> partidas =
+                almacen.listarPartidas(jugador.getJugadorId());
+
+        if (partidas.isEmpty()) {
+            vista.mostrarMensaje(jugador.getNombre() + " no tiene partidas.");
+            return;
+        }
+
+        ArrayList<String> lineas = new ArrayList<>();
+        for (ResumenPartida resumen : partidas) {
+            lineas.add(resumen.getPartidaId()
+                    + " | " + resumen.getJugadores()
+                    + " | " + resumen.getEstado()
+                    + " | Ronda " + resumen.getRonda());
+        }
+
+        int elegida = vista.elegirDeLista("Partidas de " + jugador.getNombre(), lineas);
+        if (elegida == 0) {
+            return;
+        }
+
+        // una partida finalizada solo muestra su resultado
+        Partida partida = almacen.cargarPartida(
+                partidas.get(elegida - 1).getPartidaId()
+        );
+        jugar(partida);
+    }
+
+    /** Muestra las estadisticas de un jugador. */
+    private void verEstadisticas() {
+        Jugador jugador = pedirJugador("Alias: ");
+        if (jugador == null) {
+            return;
+        }
+
+        EstadisticasJugador datos =
+                almacen.obtenerEstadisticas(jugador.getJugadorId());
+
+        vista.mostrarEstadisticas(
+                jugador.getNombre(),
+                datos.getPartidasFinalizadas(),
+                datos.getVictorias(),
+                datos.getPuntosAcumulados(),
+                datos.getReliquiasEntregadas()
+        );
+    }
+
+    /** Muestra las reglas y deja probar el vector del Anexo B. */
+    private void ayuda() {
+        vista.mostrarAyuda();
+
+        if (vista.pedirOpcionAyuda() == 1) {
+            descifrarVectorAnexoB();
+        }
+    }
+
+    /** Descifra el paquete fijo del Anexo B con su contrasena publica. */
+    private void descifrarVectorAnexoB() {
+        PaqueteCofre paquete = VectorAnexoB.crearPaquete();
+
+        try {
+            String textoClaro = criptografia.descifrar(
+                    paquete, VectorAnexoB.CONTRASENA
+            );
+
+            vista.mostrarVectorAnexoB(
+                    paquete.getPartidaId(),
+                    paquete.getCofreId(),
+                    VectorAnexoB.CONTRASENA,
+                    textoClaro
+            );
+
+        } catch (FalloAutenticacionException | PaqueteCorruptoException e) {
+            vista.mostrarError("No se pudo descifrar el vector: " + e.getMessage());
+        }
+    }
+
+    /** Pide un alias y busca al jugador. Devuelve null si no existe. */
+    private Jugador pedirJugador(String mensaje) {
+        String alias = vista.pedirAlias(mensaje);
+        Jugador jugador = almacen.buscarJugadorPorAlias(alias);
+
+        if (jugador == null) {
+            vista.mostrarError("No existe un jugador con el alias " + alias + ".");
+        }
+
+        return jugador;
+    }
+
     /** Ejecuta el ciclo principal de una partida. */
     public void jugar(Partida partida) {
 
         inicioTurno = reloj.getAsLong();
         guardadoPendiente = false;
+        conflictoVersion = false;
 
         boolean salir = false;
 
@@ -110,10 +290,7 @@ public class Controlador {
 
             case 1 -> mover(partida);
 
-            case 2 -> ejecutar(
-                    partida,
-                    FabricaAcciones.crearAccionExplorar()
-            );
+            case 2 -> explorar(partida);
 
             case 3 -> ejecutar(
                     partida,
@@ -155,6 +332,71 @@ public class Controlador {
         vista.mostrarMensaje(
                 "Posicion actual: "
                         + jugador.getPosicion().getTexto()
+        );
+    }
+
+    /**
+     * Carga el templo desde la API si hace falta y luego explora.
+     */
+    private void explorar(Partida partida) {
+
+        Coordenada posicion =
+                partida.getTurnoActual().getPosicion();
+
+        boolean esTemplo = partida.getTablero()
+                .obtenerCasilla(posicion)
+                .getTipo() == TipoDeTerreno.TEMPLO;
+
+        // solo se pide si es un templo sin explorar y aun no cargado
+        if (esTemplo
+                && !partida.yaFueExplorado(posicion)
+                && partida.obtenerReliquiaOculta(posicion) == null) {
+
+            ContenidoTemplo contenido;
+
+            try {
+
+                contenido = almacen.obtenerContenidoTemplo(
+                        partida.getPartidaId(),
+                        posicion.getTexto()
+                );
+
+            } catch (RuntimeException e) {
+
+                // no se ejecuta la accion, asi no se gasta
+                vista.mostrarError(
+                        "No se pudo consultar el templo en la API: "
+                                + e.getMessage()
+                );
+
+                return;
+            }
+
+            if (contenido == null) {
+
+                vista.mostrarError(
+                        "La API no devolvio el contenido del templo."
+                );
+
+                return;
+            }
+
+            if (contenido.getReliquia() != null) {
+                partida.esconderReliquia(
+                        posicion, contenido.getReliquia()
+                );
+            }
+
+            if (contenido.getPista() != null) {
+                partida.esconderPista(
+                        posicion, contenido.getPista()
+                );
+            }
+        }
+
+        ejecutar(
+                partida,
+                FabricaAcciones.crearAccionExplorar()
         );
     }
 
@@ -359,9 +601,14 @@ public class Controlador {
 
     /**
      * Guarda y sale solamente si el almacen
-     * confirma el guardado.
+     * confirma el guardado. Con conflicto de versiones sale sin guardar.
      */
     private boolean guardarYSalir(Partida partida) {
+
+        // reintentar no sirve, la API ya tiene otra version
+        if (conflictoVersion) {
+            return salirSinGuardar();
+        }
 
         boolean eraReintento = guardadoPendiente;
 
@@ -376,19 +623,33 @@ public class Controlador {
         if (intentarGuardar(partida)) {
 
             vista.mostrarMensaje(
-                    "Partida guardada. Hasta pronto!"
+                    "Partida guardada. ¡Hasta pronto!"
             );
 
             return true;
         }
 
+        if (conflictoVersion) {
+            return salirSinGuardar();
+        }
+
         vista.mostrarError(
-                "No se pudo guardar la partida. "
-                        + "No se cerrara el juego hasta "
-                        + "confirmar el guardado."
+                "No se pudo guardar la partida, "
+                        + "por eso no se cerró el juego. "
+                        + "Intenta de nuevo."
         );
 
         return false;
+    }
+
+    /** Vuelve al menu principal sin guardar cuando hay conflicto de versiones. */
+    private boolean salirSinGuardar() {
+        vista.mostrarMensaje(
+                "Se vuelve al menu sin guardar. Los cambios desde el"
+                        + " ultimo guardado se pierden. Carga la partida"
+                        + " de nuevo para seguir desde la version de la API."
+        );
+        return true;
     }
 
     /**
@@ -455,10 +716,23 @@ public class Controlador {
     private boolean intentarGuardar(Partida partida) {
 
         boolean guardadoCorrecto;
+        conflictoVersion = false;
 
         try {
 
             guardadoCorrecto = almacen.guardar(partida);
+
+        } catch (ConflictoVersionException e) {
+
+            vista.mostrarError(
+                    "Conflicto de versiones: " + e.getMessage()
+                            + " Otro proceso guardo esta partida antes."
+                            + " Tus cambios no se guardaron. Usa la opcion 0"
+                            + " para volver al menu y carga la partida de nuevo."
+            );
+
+            conflictoVersion = true;
+            guardadoCorrecto = false;
 
         } catch (RuntimeException e) {
 

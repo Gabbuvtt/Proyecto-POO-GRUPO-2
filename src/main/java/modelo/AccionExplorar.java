@@ -34,6 +34,7 @@ public class AccionExplorar implements AccionJuego {
         this.usarDatosApi = true;
     }
 
+    /** Recoge la reliquia y la pista del templo actual. Cuesta 1 accion. */
     @Override
     public ResultadoAccion ejecutar(Partida partida) {
 

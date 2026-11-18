@@ -5,6 +5,8 @@ import modelo.EstadoDePartida;
 import modelo.Jugador;
 import modelo.Participante;
 import modelo.Partida;
+import modelo.Pista;
+import modelo.Reliquia;
 import modelo.Tablero;
 import modelo.TipoDeTerreno;
 import org.junit.jupiter.api.AfterEach;
@@ -17,9 +19,11 @@ import vista.VistaConsola;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -30,8 +34,13 @@ class ControladorTest {
         int guardados = 0;
         boolean fallar = false;
 
+        boolean conflicto = false;
+
         @Override
         public boolean guardar(Partida partida) {
+            if (conflicto) {
+                throw new ConflictoVersionException("La partida tiene una version mas nueva en la API.");
+            }
             if (fallar) {
                 return false;
             }
@@ -42,6 +51,63 @@ class ControladorTest {
         @Override
         public PaqueteCofre obtenerPaqueteCofre(String partidaId) {
             return null;
+        }
+
+        @Override
+        public ContenidoTemplo obtenerContenidoTemplo(String partidaId, String coordenada) {
+            if (fallar) {
+                throw new IllegalStateException("La partida no existe");
+            }
+            return new ContenidoTemplo(new Reliquia("REL-01", 2), new Pista(1, "ORBITA"));
+        }
+
+        boolean disponible = true;
+        boolean aliasRepetido = false;
+        int partidasCreadas = 0;
+        Partida partidaGuardada;
+
+        @Override
+        public boolean apiDisponible() {
+            return disponible;
+        }
+
+        @Override
+        public String registrarJugador(String nombre, String alias) {
+            if (aliasRepetido) {
+                throw new IllegalStateException("Ya existe un jugador con el alias " + alias);
+            }
+            return "J3";
+        }
+
+        @Override
+        public Jugador buscarJugadorPorAlias(String alias) {
+            if (alias.equals("nadie")) {
+                return null;
+            }
+            return new Jugador("ID-" + alias, alias, alias);
+        }
+
+        @Override
+        public String crearPartida(String jugador1, String jugador2) {
+            partidasCreadas++;
+            return partidaGuardada.getPartidaId();
+        }
+
+        @Override
+        public ArrayList<ResumenPartida> listarPartidas(String jugadorId) {
+            ArrayList<ResumenPartida> lista = new ArrayList<>();
+            lista.add(new ResumenPartida(partidaGuardada.getPartidaId(), "ana_ucab, luis_ucab", "EN_CURSO", 1));
+            return lista;
+        }
+
+        @Override
+        public Partida cargarPartida(String partidaId) {
+            return partidaGuardada;
+        }
+
+        @Override
+        public EstadisticasJugador obtenerEstadisticas(String jugadorId) {
+            return new EstadisticasJugador(1, 1, 8, 3);
         }
     }
 
@@ -182,5 +248,168 @@ class ControladorTest {
 
         assertEquals(3, ana.getSegundosConsumidos());
         assertEquals(3, almacen.guardados);
+    }
+
+    /** Partida con un templo en B3 donde esta parada Ana. */
+    private Partida partidaEnTemplo() {
+        Partida partida = partidaNueva();
+        partida.getTablero().colocarTerreno(new Coordenada("B3"), TipoDeTerreno.TEMPLO);
+        partida.getTurnoActual().setPosicion(new Coordenada("B3"));
+        return partida;
+    }
+
+    @Test
+    void explorarUnTemploTraeLaReliquiaYLaPistaDeLaApi() {
+        Partida partida = partidaEnTemplo();
+        Participante ana = partida.getTurnoActual();
+        controlador("2\n0\n").jugar(partida);
+
+        assertEquals(1, ana.getInventario().getReliquias().size());
+        assertEquals("REL-01", ana.getInventario().getReliquias().get(0).getReliquiaId());
+        assertEquals("ORBITA", partida.getPistasDescubiertas().get(0).getFragmento());
+        assertEquals(2, partida.getAccionesRestantes());
+    }
+
+    @Test
+    void siLaApiFallaAlExplorarNoSeGastaLaAccion() {
+        almacen.fallar = true;
+        Partida partida = partidaEnTemplo();
+        Controlador controlador = controlador("2\n");
+        try {
+            controlador.jugar(partida);
+        } catch (IllegalStateException e) {
+            // se acabaron las teclas
+        }
+
+        assertEquals(3, partida.getAccionesRestantes());
+        assertEquals(0, partida.getTurnoActual().getInventario().getReliquias().size());
+        assertTrue(salida().contains("No se pudo consultar el templo en la API: La partida no existe"));
+    }
+
+    @Test
+    void unConflictoDeVersionesSeExplicaYBloqueaLasAcciones() {
+        almacen.conflicto = true;
+        Partida partida = partidaNueva();
+        // guarda (conflicto) e intenta mover, que queda bloqueado
+        Controlador controlador = controlador("6\n1\n");
+        try {
+            controlador.jugar(partida);
+        } catch (IllegalStateException e) {
+            // se acabaron las teclas
+        }
+
+        String texto = salida();
+        assertTrue(texto.contains("Error: Conflicto de versiones: La partida tiene una version mas nueva en la API."));
+        assertTrue(texto.contains("Usa la opcion 0 para volver al menu"));
+        assertFalse(texto.contains("Ctrl+C"));
+        assertTrue(texto.contains("No puedes realizar acciones mientras haya un guardado pendiente."));
+        assertEquals(3, partida.getAccionesRestantes());
+    }
+
+    @Test
+    void conConflictoGuardarYSalirVuelveAlMenuSinGuardar() {
+        almacen.conflicto = true;
+        // guarda (conflicto) y despues 0: tiene que salir sin pedir mas teclas
+        controlador("6\n0\n").jugar(partidaNueva());
+
+        String texto = salida();
+        assertTrue(texto.contains("Se vuelve al menu sin guardar. Los cambios desde el ultimo guardado se pierden."));
+        assertFalse(texto.contains("Partida guardada. ¡Hasta pronto!"));
+        assertEquals(0, almacen.guardados);
+    }
+
+    @Test
+    void siElPrimerGuardarYSalirDaConflictoTambienSale() {
+        almacen.conflicto = true;
+        controlador("0\n").jugar(partidaNueva());
+
+        assertTrue(salida().contains("Se vuelve al menu sin guardar."));
+    }
+
+    @Test
+    void laAyudaDescifraElVectorDelAnexoB() {
+        controlador("5\n1\n0\n").iniciar();
+
+        String texto = salida();
+        assertTrue(texto.contains("Partida: EX-RED-01 | Cofre: COFRE-01"));
+        assertTrue(texto.contains("Texto descifrado: {\"partidaId\":\"EX-RED-01\",\"cofreId\":\"COFRE-01\","
+                + "\"reliquiaId\":\"REL-ESPECIAL\",\"valor\":4}"));
+    }
+
+    @Test
+    void sinApiMuestraUnMensajeYTermina() {
+        almacen.disponible = false;
+        controlador("").iniciar();
+
+        assertTrue(salida().contains("La API no esta disponible"));
+    }
+
+    @Test
+    void registrarJugadorMuestraSuId() {
+        controlador("1\nAna Perez\nana_ucab\n0\n").iniciar();
+
+        assertTrue(salida().contains("Jugador creado: J3"));
+    }
+
+    @Test
+    void aliasRepetidoMuestraElErrorYVuelveAlMenu() {
+        almacen.aliasRepetido = true;
+        controlador("1\nAna Perez\nana_ucab\n0\n").iniciar();
+
+        String texto = salida();
+        assertTrue(texto.contains("Error: Ya existe un jugador con el alias ana_ucab"));
+        assertTrue(texto.indexOf("1. Registrar jugador") != texto.lastIndexOf("1. Registrar jugador"));
+    }
+
+    @Test
+    void nuevaPartidaRechazaAlMismoJugadorDosVeces() {
+        controlador("2\nana_ucab\nana_ucab\n0\n").iniciar();
+
+        assertTrue(salida().contains("Los dos jugadores deben ser distintos."));
+        assertEquals(0, almacen.partidasCreadas);
+    }
+
+    @Test
+    void nuevaPartidaMuestraElOrdenYEmpiezaAJugar() {
+        almacen.partidaGuardada = partidaNueva();
+        // crea la partida, guarda y sale del juego, y sale del menu
+        controlador("2\nana_ucab\nluis_ucab\n0\n0\n").iniciar();
+
+        String texto = salida();
+        assertEquals(1, almacen.partidasCreadas);
+        assertTrue(texto.contains("Partida: EX-RED-01 | Campamento: C3"));
+        assertTrue(texto.contains("Orden sorteado: Ana, Luis | Ronda: 1 de 8"));
+        assertTrue(texto.contains("Partida guardada. ¡Hasta pronto!"));
+    }
+
+    @Test
+    void cargarPartidaSigueConElMismoTurno() {
+        Partida partida = partidaNueva();
+        partida.consumirAcciones(2);
+        almacen.partidaGuardada = partida;
+        // elige la partida 1, guarda y sale, y sale del menu
+        controlador("3\nana_ucab\n1\n0\n0\n").iniciar();
+
+        String texto = salida();
+        assertTrue(texto.contains("EX-RED-01 | ana_ucab, luis_ucab | EN_CURSO | Ronda 1"));
+        assertTrue(texto.contains("Acciones: 1"));
+        assertEquals(1, partida.getAccionesRestantes());
+    }
+
+    @Test
+    void estadisticasMuestraLosDatosDelJugador() {
+        controlador("4\nana_ucab\n0\n").iniciar();
+
+        String texto = salida();
+        assertTrue(texto.contains("ESTADÍSTICAS DE ANA_UCAB"));
+        assertTrue(texto.contains("Victorias: 1"));
+        assertTrue(texto.contains("Puntos acumulados: 8"));
+    }
+
+    @Test
+    void aliasInexistenteAvisaYVuelveAlMenu() {
+        controlador("4\nnadie\n0\n").iniciar();
+
+        assertTrue(salida().contains("No existe un jugador con el alias nadie."));
     }
 }

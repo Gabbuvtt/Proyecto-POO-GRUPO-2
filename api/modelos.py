@@ -27,6 +27,8 @@ class EstadoJugador(BaseModel):
     puntos: int
     inventario: list[Reliquia]
     entregadas: list[Reliquia]
+    # opcional para no romper estados guardados sin este campo
+    segundosConsumidos: int = 0
 
 
 class EstadoPartida(BaseModel):
