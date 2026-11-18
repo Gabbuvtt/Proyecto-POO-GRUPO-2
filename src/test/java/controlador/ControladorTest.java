@@ -304,6 +304,16 @@ class ControladorTest {
     }
 
     @Test
+    void laAyudaDescifraElVectorDelAnexoB() {
+        controlador("5\n1\n0\n").iniciar();
+
+        String texto = salida();
+        assertTrue(texto.contains("Partida: EX-RED-01 | Cofre: COFRE-01"));
+        assertTrue(texto.contains("Texto descifrado: {\"partidaId\":\"EX-RED-01\",\"cofreId\":\"COFRE-01\","
+                + "\"reliquiaId\":\"REL-ESPECIAL\",\"valor\":4}"));
+    }
+
+    @Test
     void sinApiMuestraUnMensajeYTermina() {
         almacen.disponible = false;
         controlador("").iniciar();

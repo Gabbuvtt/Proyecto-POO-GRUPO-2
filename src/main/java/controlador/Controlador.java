@@ -10,8 +10,11 @@ import modelo.Participante;
 import modelo.Partida;
 import modelo.ResultadoAccion;
 import modelo.TipoDeTerreno;
+import servicio.FalloAutenticacionException;
 import servicio.PaqueteCofre;
+import servicio.PaqueteCorruptoException;
 import servicio.ServicioCriptografico;
+import servicio.VectorAnexoB;
 import vista.DatosRegistro;
 import vista.VistaConsola;
 
@@ -83,7 +86,7 @@ public class Controlador {
                     case 2 -> nuevaPartida();
                     case 3 -> cargarPartida();
                     case 4 -> verEstadisticas();
-                    case 5 -> vista.mostrarAyuda();
+                    case 5 -> ayuda();
                     default -> salir = true;
                 }
             } catch (RuntimeException e) {
@@ -183,6 +186,36 @@ public class Controlador {
                 datos.getPuntosAcumulados(),
                 datos.getReliquiasEntregadas()
         );
+    }
+
+    /** Muestra las reglas y deja probar el vector del Anexo B. */
+    private void ayuda() {
+        vista.mostrarAyuda();
+
+        if (vista.pedirOpcionAyuda() == 1) {
+            descifrarVectorAnexoB();
+        }
+    }
+
+    /** Descifra el paquete fijo del Anexo B con su contrasena publica. */
+    private void descifrarVectorAnexoB() {
+        PaqueteCofre paquete = VectorAnexoB.crearPaquete();
+
+        try {
+            String textoClaro = criptografia.descifrar(
+                    paquete, VectorAnexoB.CONTRASENA
+            );
+
+            vista.mostrarVectorAnexoB(
+                    paquete.getPartidaId(),
+                    paquete.getCofreId(),
+                    VectorAnexoB.CONTRASENA,
+                    textoClaro
+            );
+
+        } catch (FalloAutenticacionException | PaqueteCorruptoException e) {
+            vista.mostrarError("No se pudo descifrar el vector: " + e.getMessage());
+        }
     }
 
     /** Pide un alias y busca al jugador. Devuelve null si no existe. */

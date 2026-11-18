@@ -167,6 +167,23 @@ public class VistaConsola {
         System.out.println("- Gana quien sume más puntos. Si empatan, quien entregó más reliquias.");
     }
 
+    /** Pregunta si se quiere descifrar el vector del Anexo B. Devuelve 1 o 0. */
+    public int pedirOpcionAyuda() {
+        System.out.println();
+        System.out.println("1. Descifrar el vector de prueba del Anexo B");
+        System.out.println("0. Volver");
+        return leerEntero("Opción: ", 0, 1);
+    }
+
+    /** Muestra el resultado de descifrar el vector del Anexo B. */
+    public void mostrarVectorAnexoB(String partidaId, String cofreId, String contrasena, String textoClaro) {
+        System.out.println();
+        System.out.println("VECTOR DEL ANEXO B");
+        System.out.println("Partida: " + partidaId + " | Cofre: " + cofreId);
+        System.out.println("Contraseña: " + contrasena);
+        System.out.println("Texto descifrado: " + textoClaro);
+    }
+
     /** Muestra la cabecera del turno: partida, ronda, jugador, posicion, puntos, acciones e inventario. */
     public void mostrarEstadoTurno(Partida partida) {
         Participante actual = partida.getTurnoActual();

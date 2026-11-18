@@ -119,7 +119,7 @@ Al arrancar, el juego llama a `GET /salud`. Si la API no responde o su `versionC
 2. **Nueva partida**: pide los alias de los dos jugadores (deben ser distintos), crea la partida con un `requestId` nuevo y muestra el id, el campamento y el orden sorteado. Si falla la red, se reintenta con el mismo `requestId` (hasta 3 veces) para no crear partidas duplicadas.
 3. **Cargar partida**: ver abajo.
 4. **Consultar estadísticas**: pide un alias y muestra partidas finalizadas, victorias, puntos acumulados y reliquias entregadas.
-5. **Reglas y ayuda**: resumen corto de las reglas.
+5. **Reglas y ayuda**: resumen corto de las reglas. Después ofrece descifrar el vector de prueba del Anexo B (`EX-RED-01`, `COFRE-01`, contraseña `ORBITA-7392`) y muestra el JSON que se obtiene. Sirve para la demostración de la sección 14, porque las partidas normales tienen un cofre aleatorio.
 
 Después de cada opción se vuelve al menú. Los errores de la API se muestran con su mensaje.
 
