@@ -9,4 +9,7 @@ public interface AlmacenPartida {
 
     /** Pide el paquete cifrado del cofre  */
     PaqueteCofre obtenerPaqueteCofre(String partidaId);
+
+    /** Pide la reliquia y la pista del templo en la coordenada dada. */
+    ContenidoTemplo obtenerContenidoTemplo(String partidaId, String coordenada);
 }

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import controlador.AlmacenPartida;
+import controlador.ContenidoTemplo;
 import modelo.EstadoDePartida;
 import modelo.Participante;
 import modelo.Partida;
@@ -182,6 +183,85 @@ public class RepositorioPartidas implements AlmacenPartida {
                     e
             );
         }
+    }
+
+    /**
+     * Consulta la reliquia y la pista de un templo.
+     */
+    @Override
+    public ContenidoTemplo obtenerContenidoTemplo(
+            String partidaId,
+            String coordenada) {
+
+        String respuesta;
+
+        try {
+            respuesta = cliente.get(
+                    "/partidas/" + partidaId
+                            + "/templos/" + coordenada
+            );
+        } catch (ClienteApi.ErrorApi e) {
+            // usa el mensaje que manda la API en {"codigo","mensaje"}
+            throw new IllegalStateException(
+                    leerMensajeError(e), e
+            );
+        }
+
+        try {
+            JsonNode datos = mapeador.readTree(respuesta);
+
+            if (datos == null || !datos.isObject()) {
+                throw new IllegalStateException(
+                        "La API no devolvio un templo valido."
+                );
+            }
+
+            Reliquia reliquia = null;
+            JsonNode datosReliquia = datos.get("reliquia");
+
+            if (datosReliquia != null && datosReliquia.isObject()) {
+                reliquia = new Reliquia(
+                        obtenerTexto(datosReliquia, "reliquiaId"),
+                        obtenerEntero(datosReliquia, "valor")
+                );
+            }
+
+            Pista pista = null;
+            JsonNode datosPista = datos.get("pista");
+
+            if (datosPista != null && datosPista.isObject()) {
+                pista = new Pista(
+                        obtenerEntero(datosPista, "indice"),
+                        obtenerTexto(datosPista, "fragmento")
+                );
+            }
+
+            return new ContenidoTemplo(reliquia, pista);
+
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(
+                    "La API devolvio un JSON de templo invalido.",
+                    e
+            );
+        }
+    }
+
+    /**
+     * Saca el campo "mensaje" del error de la API.
+     * Si no se puede leer, usa el mensaje del error HTTP.
+     */
+    private String leerMensajeError(ClienteApi.ErrorApi error) {
+        try {
+            JsonNode datos = mapeador.readTree(error.getRespuesta());
+
+            if (datos != null && datos.path("mensaje").isTextual()) {
+                return datos.get("mensaje").asText();
+            }
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            // cuerpo vacio o que no es JSON
+        }
+
+        return error.getMessage();
     }
 
     /**

@@ -5,6 +5,8 @@ import modelo.EstadoDePartida;
 import modelo.Jugador;
 import modelo.Participante;
 import modelo.Partida;
+import modelo.Pista;
+import modelo.Reliquia;
 import modelo.Tablero;
 import modelo.TipoDeTerreno;
 import org.junit.jupiter.api.AfterEach;
@@ -42,6 +44,14 @@ class ControladorTest {
         @Override
         public PaqueteCofre obtenerPaqueteCofre(String partidaId) {
             return null;
+        }
+
+        @Override
+        public ContenidoTemplo obtenerContenidoTemplo(String partidaId, String coordenada) {
+            if (fallar) {
+                throw new IllegalStateException("La partida no existe");
+            }
+            return new ContenidoTemplo(new Reliquia("REL-01", 2), new Pista(1, "ORBITA"));
         }
     }
 
@@ -182,5 +192,41 @@ class ControladorTest {
 
         assertEquals(3, ana.getSegundosConsumidos());
         assertEquals(3, almacen.guardados);
+    }
+
+    /** Partida con un templo en B3 donde esta parada Ana. */
+    private Partida partidaEnTemplo() {
+        Partida partida = partidaNueva();
+        partida.getTablero().colocarTerreno(new Coordenada("B3"), TipoDeTerreno.TEMPLO);
+        partida.getTurnoActual().setPosicion(new Coordenada("B3"));
+        return partida;
+    }
+
+    @Test
+    void explorarUnTemploTraeLaReliquiaYLaPistaDeLaApi() {
+        Partida partida = partidaEnTemplo();
+        Participante ana = partida.getTurnoActual();
+        controlador("2\n0\n").jugar(partida);
+
+        assertEquals(1, ana.getInventario().getReliquias().size());
+        assertEquals("REL-01", ana.getInventario().getReliquias().get(0).getReliquiaId());
+        assertEquals("ORBITA", partida.getPistasDescubiertas().get(0).getFragmento());
+        assertEquals(2, partida.getAccionesRestantes());
+    }
+
+    @Test
+    void siLaApiFallaAlExplorarNoSeGastaLaAccion() {
+        almacen.fallar = true;
+        Partida partida = partidaEnTemplo();
+        Controlador controlador = controlador("2\n");
+        try {
+            controlador.jugar(partida);
+        } catch (IllegalStateException e) {
+            // se acabaron las teclas
+        }
+
+        assertEquals(3, partida.getAccionesRestantes());
+        assertEquals(0, partida.getTurnoActual().getInventario().getReliquias().size());
+        assertTrue(salida().contains("No se pudo consultar el templo en la API: La partida no existe"));
     }
 }

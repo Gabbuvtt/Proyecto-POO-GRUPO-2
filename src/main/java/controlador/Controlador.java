@@ -2,11 +2,13 @@
 package controlador;
 
 import modelo.AccionJuego;
+import modelo.Coordenada;
 import modelo.EstadoDePartida;
 import modelo.FabricaAcciones;
 import modelo.Participante;
 import modelo.Partida;
 import modelo.ResultadoAccion;
+import modelo.TipoDeTerreno;
 import servicio.PaqueteCofre;
 import servicio.ServicioCriptografico;
 import vista.VistaConsola;
@@ -110,10 +112,7 @@ public class Controlador {
 
             case 1 -> mover(partida);
 
-            case 2 -> ejecutar(
-                    partida,
-                    FabricaAcciones.crearAccionExplorar()
-            );
+            case 2 -> explorar(partida);
 
             case 3 -> ejecutar(
                     partida,
@@ -155,6 +154,71 @@ public class Controlador {
         vista.mostrarMensaje(
                 "Posicion actual: "
                         + jugador.getPosicion().getTexto()
+        );
+    }
+
+    /**
+     * Carga el templo desde la API si hace falta y luego explora.
+     */
+    private void explorar(Partida partida) {
+
+        Coordenada posicion =
+                partida.getTurnoActual().getPosicion();
+
+        boolean esTemplo = partida.getTablero()
+                .obtenerCasilla(posicion)
+                .getTipo() == TipoDeTerreno.TEMPLO;
+
+        // solo se pide si es un templo sin explorar y aun no cargado
+        if (esTemplo
+                && !partida.yaFueExplorado(posicion)
+                && partida.obtenerReliquiaOculta(posicion) == null) {
+
+            ContenidoTemplo contenido;
+
+            try {
+
+                contenido = almacen.obtenerContenidoTemplo(
+                        partida.getPartidaId(),
+                        posicion.getTexto()
+                );
+
+            } catch (RuntimeException e) {
+
+                // no se ejecuta la accion, asi no se gasta
+                vista.mostrarError(
+                        "No se pudo consultar el templo en la API: "
+                                + e.getMessage()
+                );
+
+                return;
+            }
+
+            if (contenido == null) {
+
+                vista.mostrarError(
+                        "La API no devolvio el contenido del templo."
+                );
+
+                return;
+            }
+
+            if (contenido.getReliquia() != null) {
+                partida.esconderReliquia(
+                        posicion, contenido.getReliquia()
+                );
+            }
+
+            if (contenido.getPista() != null) {
+                partida.esconderPista(
+                        posicion, contenido.getPista()
+                );
+            }
+        }
+
+        ejecutar(
+                partida,
+                FabricaAcciones.crearAccionExplorar()
         );
     }
 
