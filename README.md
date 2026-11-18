@@ -25,11 +25,17 @@ fastapi>=0.100.0
 uvicorn[standard]>=0.20.0
 pydantic>=2.0.0
 cryptography>=41.0.0
+httpx>=0.27.0
+httpx2>=2.0.0
 ```
+
+`httpx` y `httpx2` solo se usan en las pruebas de la API (`TestClient`).
 
 ## Dirección de la API
 
 URL base: `http://localhost:8000/api/v1`
+
+El juego Java la lee de `src/main/resources/config.properties` (propiedad `urlBase`).
 
 La documentación interactiva (Swagger) está en `http://localhost:8000/docs`.
 
@@ -88,11 +94,57 @@ Requisitos: Java 22 (JDK) y Maven 3.
    mvn package
    ```
 
+   El jar incluye Jackson, así que no hace falta nada más para ejecutarlo. En `target/` también queda un `original-...jar` sin dependencias, que no se usa.
+
 3. Ejecutar el juego:
 
    ```
    java -jar target/expedicion-isla-reliquias-1.0-SNAPSHOT.jar
    ```
+
+Al arrancar, el juego llama a `GET /salud`. Si la API no responde o su `versionContrato` no es `2`, muestra un mensaje y termina.
+
+### Menú principal
+
+```
+1. Registrar jugador
+2. Nueva partida
+3. Cargar partida
+4. Consultar estadísticas
+5. Reglas y ayuda
+0. Salir
+```
+
+1. **Registrar jugador**: pide nombre (1 a 80 caracteres) y alias (3 a 20 letras, dígitos, `-` o `_`) y muestra el `jugadorId` que asigna la API. Si el alias ya existe, se muestra el error de la API y se vuelve al menú.
+2. **Nueva partida**: pide los alias de los dos jugadores (deben ser distintos), crea la partida con un `requestId` nuevo y muestra el id, el campamento y el orden sorteado. Si falla la red, se reintenta con el mismo `requestId` (hasta 3 veces) para no crear partidas duplicadas.
+3. **Cargar partida**: ver abajo.
+4. **Consultar estadísticas**: pide un alias y muestra partidas finalizadas, victorias, puntos acumulados y reliquias entregadas.
+5. **Reglas y ayuda**: resumen corto de las reglas.
+
+Después de cada opción se vuelve al menú. Los errores de la API se muestran con su mensaje.
+
+### Cargar una partida
+
+1. Escribir el alias de uno de los jugadores.
+2. Se listan todas sus partidas con id, jugadores, estado y ronda, por ejemplo `EX-001 | ana_ucab, luis_ucab | EN_CURSO | Ronda 2`.
+3. Elegir el número de la partida (`0` vuelve al menú).
+
+Una partida `EN_CURSO` sigue exactamente donde se guardó: misma ronda, mismo jugador, mismas acciones restantes, posiciones, inventarios, pistas, templos explorados y segundos jugados. El turno no se reinicia. Una partida `FINALIZADA` solo muestra su resultado.
+
+### Menú del turno
+
+```
+1. Mover
+2. Explorar templo
+3. Entregar reliquias
+4. Abrir cofre
+5. Consultar tablero, inventario y pistas
+6. Guardar
+7. Terminar turno
+0. Guardar y salir
+```
+
+La partida se guarda sola al cerrar cada turno. Si un guardado falla, se bloquean las acciones hasta reintentar con `6` o `0`, y `0` solo sale cuando la API confirma el guardado. El tiempo de cada turno se mide en segundos y se envía en el campo `segundosConsumidos` de cada jugador.
 
 ## Pruebas
 
@@ -101,7 +153,7 @@ Requisitos: Java 22 (JDK) y Maven 3.
 Desde la carpeta `api`, con el entorno virtual activo:
 
 ```
-python -m unittest discover tests
+python -m unittest discover -s tests
 ```
 
 ### Java
@@ -136,9 +188,13 @@ Si Maven no está en el PATH se puede usar el de IntelliJ, por ejemplo:
 
 En `postman/` están la colección (`Expedicion.postman_collection.json`) y el entorno (`Expedicion.postman_environment.json`).
 
+La colección tiene los 10 endpoints del contrato v2, cada uno con ejemplos guardados de éxito (200/201) y de error (400, 404, 409, 503). El `PUT /partidas/{id}/estado` incluye `segundosConsumidos` en cada jugador.
+
 1. Importar ambos archivos en Postman.
 2. Seleccionar el entorno **Expedición - Local** (`base_url` = `http://localhost:8000/api/v1`).
-3. Levantar la API en el puerto `8000` y probar los endpoints en orden.
+3. Levantar la API en el puerto `8000` y probar los endpoints en el orden de la colección.
+
+Los ejemplos suponen datos vacíos: los dos primeros jugadores son `J1` y `J2` y la primera partida es `EX-001`. Si ya hay datos guardados, hay que cambiar esos ids en las peticiones. `EX-999` se usa para los ejemplos de partida inexistente.
 
 ## Guardado
 
@@ -152,3 +208,6 @@ Los jugadores, partidas y solicitudes (`requestId`) se guardan en `api/datos/exp
 
 - La API funciona con un solo proceso local a la vez; no soporta varias instancias escribiendo al mismo tiempo en `expedicion.json`.
 - Si se borra o edita `expedicion.json` a mano con el servidor encendido, hay que reiniciar la API para que recargue los datos.
+- El juego Java necesita la API encendida desde el inicio. Si la API se cae a mitad de partida, el guardado queda pendiente hasta que vuelva.
+- El tiempo de cada turno se cuenta en segundos completos. Lo que sobra se acumula para el siguiente guardado.
+- Si se cierra el juego de golpe (sin `0. Guardar y salir`), se pierde lo jugado desde el último guardado confirmado.
