@@ -134,6 +134,11 @@ class ControladorTest {
         System.setOut(salidaOriginal);
     }
 
+    /** Cuenta cuantas veces se dibujo el tablero (por su leyenda). */
+    private int vecesTablero() {
+        return salida().split("1 = Ana [|] 2 = Luis", -1).length - 1;
+    }
+
     private String salida() {
         // en Windows println usa \r\n, se deja todo con \n para comparar
         return captura.toString(StandardCharsets.UTF_8).replace("\r\n", "\n");
@@ -276,6 +281,7 @@ class ControladorTest {
         String texto = salida();
         assertTrue(texto.contains("Encontraste REL-01, valor 2."));
         assertTrue(texto.contains("Pista 1 descubierta: ORBITA"));
+        assertEquals(1, vecesTablero()); // explorar no redibuja el tablero
     }
 
     @Test
@@ -331,6 +337,28 @@ class ControladorTest {
     }
 
     @Test
+    void unMovimientoValidoVuelveAMostrarElTablero() {
+        Controlador controlador = controlador("1\nC2\n");
+        try {
+            controlador.jugar(partidaNueva());
+        } catch (IllegalStateException e) {
+            // se acabaron las teclas
+        }
+
+        // una vez al empezar el turno y otra despues de mover
+        assertEquals(2, vecesTablero());
+    }
+
+    @Test
+    void siElMovimientoCierraElTurnoElTableroNoSaleDosVeces() {
+        // tres movimientos de Ana, el ultimo cierra su turno, y Luis sale
+        controlador("1\nC2\n1\nC1\n1\nD1\n0\n").jugar(partidaNueva());
+
+        // inicio de Ana, dos movimientos que no cierran e inicio de Luis
+        assertEquals(4, vecesTablero());
+    }
+
+    @Test
     void unaAccionRechazadaNoGuarda() {
         Partida partida = partidaNueva();
         // D4 queda en diagonal desde C3
@@ -343,6 +371,7 @@ class ControladorTest {
 
         assertEquals(0, almacen.guardados);
         assertEquals(3, partida.getAccionesRestantes());
+        assertEquals(1, vecesTablero()); // solo el del inicio del turno
     }
 
     @Test

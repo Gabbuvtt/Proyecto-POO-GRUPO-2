@@ -353,6 +353,11 @@ public class Controlador {
             vista.mostrarResultado(resultado, restantes);
         }
 
+        // si el turno se cerro, el tablero ya sale al empezar el siguiente
+        if (resultado == ResultadoAccion.OK && !turnoCerrado) {
+            vista.mostrarTableroTurno(partida);
+        }
+
         despuesDeAccion(partida, actor, resultado, turnoCerrado);
     }
 
