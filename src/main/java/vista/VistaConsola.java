@@ -195,6 +195,15 @@ public class VistaConsola {
         System.out.println("Inventario: " + describirInventario(actual));
     }
 
+    /** Muestra el tablero con la posicion de los dos jugadores al empezar el turno. */
+    public void mostrarTableroTurno(Partida partida) {
+        Participante p1 = partida.getParticipante1();
+        Participante p2 = partida.getParticipante2();
+        System.out.println();
+        mostrarTablero(partida.getTablero(), p1, p2);
+        System.out.println("1 = " + p1.getJugador().getNombre() + " | 2 = " + p2.getJugador().getNombre());
+    }
+
     /** Muestra el menu del turno y devuelve la opcion elegida (0 a 7). */
     public int pedirOpcionTurno() {
         System.out.println();

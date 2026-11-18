@@ -245,6 +245,10 @@ public class Controlador {
 
         boolean salir = false;
 
+        // ultimo turno en que se mostro el tablero
+        int ultimaRonda = -1;
+        Participante ultimoParticipante = null;
+
         while (!salir &&
                 (partida.getEstado() == EstadoDePartida.EN_CURSO
                         || guardadoPendiente)) {
@@ -258,6 +262,14 @@ public class Controlador {
             }
 
             vista.mostrarEstadoTurno(partida);
+
+            // el tablero sale una sola vez al empezar cada turno
+            if (partida.getRondaActual() != ultimaRonda
+                    || partida.getTurnoActual() != ultimoParticipante) {
+                vista.mostrarTableroTurno(partida);
+                ultimaRonda = partida.getRondaActual();
+                ultimoParticipante = partida.getTurnoActual();
+            }
 
             int opcion = vista.pedirOpcionTurno();
 
