@@ -1,5 +1,6 @@
 package api;
 
+import controlador.ConflictoVersionException;
 import modelo.Coordenada;
 import modelo.EstadoDePartida;
 import modelo.Participante;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Convierte respuestas JSON de ejemplo de la API en partidas, sin red. */
@@ -49,8 +51,13 @@ class RepositorioPartidasTest {
         @Override
         public String put(String ruta, String cuerpoJson) {
             enviados.add(cuerpoJson);
+            if (conflicto) {
+                throw new ErrorApi(409, "{\"codigo\":\"REVISION_INCOMPATIBLE\",\"mensaje\":\"La revision base no coincide\"}");
+            }
             return "{\"partidaId\":\"EX-RED-01\",\"revision\":6,\"guardado\":true}";
         }
+
+        boolean conflicto = false;
     }
 
     private static final String JUGADORES = """
@@ -155,6 +162,16 @@ class RepositorioPartidasTest {
         String cuerpo = cliente.enviados.get(0);
         assertTrue(cuerpo.contains("\"revisionBase\":5"));
         assertTrue(cuerpo.contains("\"segundosConsumidos\":70"));
+    }
+
+    @Test
+    void un409QueNoEsReintentoEsConflictoDeVersiones() {
+        cliente.respuestas.put("/partidas/EX-RED-01", PARTIDA_MITAD_TURNO);
+        Partida partida = repositorio.cargarPartida("EX-RED-01");
+        cliente.conflicto = true;
+
+        // la consulta sigue en revision 5, asi que no fue un reintento ya guardado
+        assertThrows(ConflictoVersionException.class, () -> repositorio.guardar(partida));
     }
 
     @Test

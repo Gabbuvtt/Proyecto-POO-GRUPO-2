@@ -30,7 +30,10 @@ public interface AlmacenPartida {
     /** Consulta las estadisticas de un jugador. */
     EstadisticasJugador obtenerEstadisticas(String jugadorId);
 
-    /** Guarda la partida. Devuelve true solo si la API confirmo el guardado. */
+    /**
+     * Guarda la partida. Devuelve true solo si la API confirmo el guardado.
+     * Lanza ConflictoVersionException si la API tiene una revision mas nueva.
+     */
     boolean guardar(Partida partida);
 
     /** Pide el paquete cifrado del cofre  */

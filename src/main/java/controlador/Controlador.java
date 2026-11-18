@@ -665,6 +665,17 @@ public class Controlador {
 
             guardadoCorrecto = almacen.guardar(partida);
 
+        } catch (ConflictoVersionException e) {
+
+            vista.mostrarError(
+                    "Conflicto de versiones: " + e.getMessage()
+                            + " Otro proceso guardo esta partida antes."
+                            + " Tus cambios no se guardaron. Cierra el juego"
+                            + " (Ctrl+C) y vuelve a cargar la partida."
+            );
+
+            guardadoCorrecto = false;
+
         } catch (RuntimeException e) {
 
             guardadoCorrecto = false;

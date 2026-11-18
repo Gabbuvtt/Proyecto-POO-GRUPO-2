@@ -33,8 +33,13 @@ class ControladorTest {
         int guardados = 0;
         boolean fallar = false;
 
+        boolean conflicto = false;
+
         @Override
         public boolean guardar(Partida partida) {
+            if (conflicto) {
+                throw new ConflictoVersionException("La partida tiene una version mas nueva en la API.");
+            }
             if (fallar) {
                 return false;
             }
@@ -278,6 +283,24 @@ class ControladorTest {
         assertEquals(3, partida.getAccionesRestantes());
         assertEquals(0, partida.getTurnoActual().getInventario().getReliquias().size());
         assertTrue(salida().contains("No se pudo consultar el templo en la API: La partida no existe"));
+    }
+
+    @Test
+    void unConflictoDeVersionesSeExplicaYBloqueaLasAcciones() {
+        almacen.conflicto = true;
+        Partida partida = partidaNueva();
+        // guarda (conflicto) e intenta mover, que queda bloqueado
+        Controlador controlador = controlador("6\n1\n");
+        try {
+            controlador.jugar(partida);
+        } catch (IllegalStateException e) {
+            // se acabaron las teclas
+        }
+
+        String texto = salida();
+        assertTrue(texto.contains("Error: Conflicto de versiones: La partida tiene una version mas nueva en la API."));
+        assertTrue(texto.contains("No puedes realizar acciones mientras haya un guardado pendiente."));
+        assertEquals(3, partida.getAccionesRestantes());
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import controlador.AlmacenPartida;
+import controlador.ConflictoVersionException;
 import controlador.ContenidoTemplo;
 import controlador.EstadisticasJugador;
 import controlador.ResumenPartida;
@@ -138,8 +139,14 @@ public class RepositorioPartidas implements AlmacenPartida {
 
         } catch (ClienteApi.ErrorApi e) {
             if (e.getCodigoEstado() == 409) {
-                return confirmarPorConsulta(
-                        partidaId, revisionBase, estado
+                // puede ser un reintento que la API ya guardo
+                if (confirmarPorConsulta(partidaId, revisionBase, estado)) {
+                    return true;
+                }
+
+                throw new ConflictoVersionException(
+                        "La partida tiene una version mas nueva en la API "
+                                + "(revision base " + revisionBase + ")."
                 );
             }
 
