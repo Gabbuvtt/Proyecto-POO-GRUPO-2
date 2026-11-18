@@ -60,7 +60,9 @@ public class ClienteApi {
 
         this.urlBase = direccion;
 
+        // con HTTP/2 uvicorn pierde el cuerpo de los POST y PUT
         this.cliente = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(TIEMPO_CONEXION)
                 .build();
     }
