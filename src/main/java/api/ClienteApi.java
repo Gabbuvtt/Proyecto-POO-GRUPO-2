@@ -187,6 +187,7 @@ public class ClienteApi {
         private final int codigoEstado;
         private final String respuesta;
 
+        /** Crea el error con el codigo HTTP y el cuerpo que mando la API. */
         public ErrorApi(int codigoEstado, String respuesta) {
             super("La API respondio con el codigo HTTP " + codigoEstado + ".");
 
@@ -194,10 +195,12 @@ public class ClienteApi {
             this.respuesta = respuesta;
         }
 
+        /** Devuelve el codigo HTTP de la respuesta. */
         public int getCodigoEstado() {
             return codigoEstado;
         }
 
+        /** Devuelve el cuerpo de la respuesta, normalmente {"codigo","mensaje"}. */
         public String getRespuesta() {
             return respuesta;
         }

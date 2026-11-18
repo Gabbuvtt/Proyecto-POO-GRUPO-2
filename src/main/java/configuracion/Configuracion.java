@@ -38,6 +38,7 @@ public final class Configuracion {
         }
     }
 
+    /** Devuelve la URL base de la API escrita en config.properties. */
     public static String getUrlBase() {
         String url = PROPIEDADES.getProperty("urlBase");
 
