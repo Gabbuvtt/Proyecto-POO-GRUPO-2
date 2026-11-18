@@ -376,16 +376,16 @@ public class Controlador {
         if (intentarGuardar(partida)) {
 
             vista.mostrarMensaje(
-                    "Partida guardada. Hasta pronto!"
+                    "Partida guardada. ¡Hasta pronto!"
             );
 
             return true;
         }
 
         vista.mostrarError(
-                "No se pudo guardar la partida. "
-                        + "No se cerrara el juego hasta "
-                        + "confirmar el guardado."
+                "No se pudo guardar la partida, "
+                        + "por eso no se cerró el juego. "
+                        + "Intenta de nuevo."
         );
 
         return false;
