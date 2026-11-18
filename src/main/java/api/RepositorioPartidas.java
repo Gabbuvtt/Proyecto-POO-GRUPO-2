@@ -9,15 +9,25 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import controlador.AlmacenPartida;
 import controlador.ContenidoTemplo;
+import controlador.EstadisticasJugador;
+import controlador.ResumenPartida;
+import modelo.Coordenada;
 import modelo.EstadoDePartida;
+import modelo.Jugador;
 import modelo.Participante;
 import modelo.Partida;
 import modelo.Pista;
 import modelo.Reliquia;
+import modelo.Tablero;
+import modelo.TipoDeTerreno;
 import servicio.PaqueteCofre;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Repositorio encargado de comunicarse con la API Python
@@ -27,6 +37,9 @@ import java.util.Map;
  * el controlador de los detalles de HTTP y JSON.
  */
 public class RepositorioPartidas implements AlmacenPartida {
+
+    private static final int VERSION_CONTRATO = 2;
+    private static final int MAX_INTENTOS_CREAR = 3;
 
     private final ClienteApi cliente;
     private final ObjectMapper mapeador;
@@ -186,6 +199,340 @@ public class RepositorioPartidas implements AlmacenPartida {
     }
 
     /**
+     * Indica si la API responde y usa la version de contrato esperada.
+     */
+    public boolean apiDisponible() {
+        try {
+            JsonNode salud = leerJson(cliente.get("/salud"));
+
+            return salud.path("disponible").asBoolean(false)
+                    && salud.path("versionContrato").asInt(-1)
+                    == VERSION_CONTRATO;
+
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Registra un jugador y devuelve su jugadorId.
+     */
+    public String registrarJugador(String nombre, String alias) {
+        ObjectNode cuerpo = mapeador.createObjectNode();
+        cuerpo.put("nombre", nombre);
+        cuerpo.put("alias", alias);
+
+        String respuesta;
+
+        try {
+            respuesta = cliente.post("/jugadores", cuerpo.toString());
+        } catch (ClienteApi.ErrorApi e) {
+            throw new IllegalStateException(leerMensajeError(e), e);
+        }
+
+        return obtenerTexto(leerJson(respuesta), "jugadorId");
+    }
+
+    /**
+     * Busca un jugador por su alias. Devuelve null si no existe.
+     */
+    public Jugador buscarJugadorPorAlias(String alias) {
+        JsonNode lista = leerJson(consultar(
+                "/jugadores?alias="
+                        + URLEncoder.encode(alias, StandardCharsets.UTF_8)
+        ));
+
+        if (!lista.isArray() || lista.isEmpty()) {
+            return null;
+        }
+
+        return leerJugador(lista.get(0));
+    }
+
+    /**
+     * Crea una partida para dos jugadores y devuelve su partidaId.
+     * Si falla la red reintenta con el mismo requestId.
+     */
+    public String crearPartida(String jugador1, String jugador2) {
+        ObjectNode cuerpo = mapeador.createObjectNode();
+        cuerpo.put("requestId", UUID.randomUUID().toString());
+        ArrayNode jugadores = cuerpo.putArray("jugadores");
+        jugadores.add(jugador1);
+        jugadores.add(jugador2);
+
+        String respuesta = null;
+        RuntimeException ultimoError = null;
+
+        for (int intento = 1;
+             intento <= MAX_INTENTOS_CREAR && respuesta == null;
+             intento++) {
+
+            try {
+                respuesta = cliente.post("/partidas", cuerpo.toString());
+            } catch (ClienteApi.ErrorApi e) {
+                // la API contesto con un error, reintentar no sirve
+                throw new IllegalStateException(leerMensajeError(e), e);
+            } catch (RuntimeException e) {
+                // error de red, se repite el mismo cuerpo
+                ultimoError = e;
+            }
+        }
+
+        if (respuesta == null) {
+            throw new IllegalStateException(
+                    "No se pudo crear la partida, la API no responde.",
+                    ultimoError
+            );
+        }
+
+        return obtenerTexto(leerJson(respuesta), "partidaId");
+    }
+
+    /**
+     * Lista las partidas en las que participa un jugador.
+     */
+    public ArrayList<ResumenPartida> listarPartidas(String jugadorId) {
+        JsonNode lista = leerJson(consultar(
+                "/partidas?jugadorId="
+                        + URLEncoder.encode(jugadorId, StandardCharsets.UTF_8)
+        ));
+
+        ArrayList<ResumenPartida> resumenes = new ArrayList<>();
+
+        for (JsonNode dato : lista) {
+            String alias = "";
+
+            for (JsonNode jugador : dato.path("jugadores")) {
+                if (!alias.isEmpty()) {
+                    alias = alias + ", ";
+                }
+                alias = alias + jugador.path("alias").asText();
+            }
+
+            resumenes.add(new ResumenPartida(
+                    obtenerTexto(dato, "partidaId"),
+                    alias,
+                    obtenerTexto(dato, "estado"),
+                    obtenerEntero(dato, "ronda")
+            ));
+        }
+
+        return resumenes;
+    }
+
+    /**
+     * Consulta las estadisticas de un jugador.
+     */
+    public EstadisticasJugador obtenerEstadisticas(String jugadorId) {
+        JsonNode datos = leerJson(consultar(
+                "/jugadores/" + jugadorId + "/estadisticas"
+        ));
+
+        return new EstadisticasJugador(
+                obtenerEntero(datos, "partidasFinalizadas"),
+                obtenerEntero(datos, "victorias"),
+                obtenerEntero(datos, "puntosAcumulados"),
+                obtenerEntero(datos, "reliquiasEntregadas")
+        );
+    }
+
+    /**
+     * Trae una partida guardada y la reconstruye con todo su estado.
+     * No reinicia el turno: ronda, jugador y acciones quedan como se guardaron.
+     */
+    public Partida cargarPartida(String partidaId) {
+        JsonNode datos = leerJson(consultar("/partidas/" + partidaId));
+        JsonNode estado = datos.path("estado");
+        JsonNode jugadores = estado.path("jugadores");
+
+        if (!jugadores.isArray() || jugadores.size() != 2) {
+            throw new IllegalStateException(
+                    "La partida guardada no tiene 2 jugadores."
+            );
+        }
+
+        HashMap<String, Jugador> registrados = leerJugadores();
+
+        // el orden de estado.jugadores es el orden de turnos
+        Partida partida = new Partida(
+                partidaId,
+                leerTablero(datos.path("terreno")),
+                leerParticipante(jugadores.get(0), registrados),
+                leerParticipante(jugadores.get(1), registrados)
+        );
+
+        for (JsonNode templo : estado.path("templosExplorados")) {
+            partida.marcarComoExplorado(new Coordenada(templo.asText()));
+        }
+
+        for (JsonNode pista : estado.path("pistas")) {
+            partida.agregarPistaDescubierta(new Pista(
+                    obtenerEntero(pista, "indice"),
+                    obtenerTexto(pista, "fragmento")
+            ));
+        }
+
+        partida.restaurarEstado(
+                obtenerEntero(estado, "ronda"),
+                obtenerEntero(estado, "indiceJugadorActual"),
+                obtenerEntero(estado, "accionesRestantes"),
+                EstadoDePartida.valueOf(obtenerTexto(estado, "estado")),
+                estado.path("cofreAbierto").asBoolean(false)
+        );
+
+        registrarRevision(partidaId, obtenerEntero(datos, "revision"));
+
+        return partida;
+    }
+
+    /**
+     * Arma el tablero a partir de la matriz de letras de la API.
+     */
+    private Tablero leerTablero(JsonNode terreno) {
+        if (!terreno.isArray() || terreno.isEmpty()) {
+            throw new IllegalStateException(
+                    "La API no devolvio el terreno."
+            );
+        }
+
+        int filas = terreno.size();
+        int columnas = terreno.get(0).size();
+        Tablero tablero = new Tablero(filas, columnas);
+
+        for (int f = 0; f < filas; f++) {
+            for (int c = 0; c < columnas; c++) {
+                String letra = terreno.get(f).path(c).asText();
+                TipoDeTerreno tipo = null;
+
+                if (letra.length() == 1) {
+                    tipo = TipoDeTerreno.buscarPorSimbolo(letra.charAt(0));
+                }
+
+                if (tipo == null) {
+                    throw new IllegalStateException(
+                            "Letra de terreno desconocida: " + letra
+                    );
+                }
+
+                tablero.colocarTerreno(new Coordenada(f, c), tipo);
+            }
+        }
+
+        return tablero;
+    }
+
+    /**
+     * Crea un participante con posicion, inventario, puntos,
+     * entregadas y segundos guardados.
+     */
+    private Participante leerParticipante(
+            JsonNode dato,
+            HashMap<String, Jugador> registrados) {
+
+        String jugadorId = obtenerTexto(dato, "jugadorId");
+        Jugador jugador = registrados.get(jugadorId);
+
+        if (jugador == null) {
+            throw new IllegalStateException(
+                    "No existe el jugador " + jugadorId
+            );
+        }
+
+        Participante participante = new Participante(
+                jugador,
+                new Coordenada(obtenerTexto(dato, "posicion"))
+        );
+
+        for (JsonNode reliquia : dato.path("inventario")) {
+            participante.getInventario().agregarReliquia(
+                    leerReliquia(reliquia)
+            );
+        }
+
+        ArrayList<Reliquia> entregadas = new ArrayList<>();
+
+        for (JsonNode reliquia : dato.path("entregadas")) {
+            entregadas.add(leerReliquia(reliquia));
+        }
+
+        participante.restaurarPuntosYEntregadas(
+                obtenerEntero(dato, "puntos"),
+                entregadas
+        );
+
+        // si el estado es viejo y no lo trae, queda en 0
+        participante.sumarSegundos(
+                dato.path("segundosConsumidos").asLong(0)
+        );
+
+        return participante;
+    }
+
+    /**
+     * Trae todos los jugadores registrados, guardados por jugadorId.
+     */
+    private HashMap<String, Jugador> leerJugadores() {
+        JsonNode lista = leerJson(consultar("/jugadores"));
+        HashMap<String, Jugador> jugadores = new HashMap<>();
+
+        for (JsonNode dato : lista) {
+            Jugador jugador = leerJugador(dato);
+            jugadores.put(jugador.getJugadorId(), jugador);
+        }
+
+        return jugadores;
+    }
+
+    private Jugador leerJugador(JsonNode dato) {
+        return new Jugador(
+                obtenerTexto(dato, "jugadorId"),
+                obtenerTexto(dato, "nombre"),
+                obtenerTexto(dato, "alias")
+        );
+    }
+
+    private Reliquia leerReliquia(JsonNode dato) {
+        return new Reliquia(
+                obtenerTexto(dato, "reliquiaId"),
+                obtenerEntero(dato, "valor")
+        );
+    }
+
+    /**
+     * Hace un GET y cambia los errores de la API por un mensaje claro.
+     */
+    private String consultar(String ruta) {
+        try {
+            return cliente.get(ruta);
+        } catch (ClienteApi.ErrorApi e) {
+            // usa el mensaje que manda la API en {"codigo","mensaje"}
+            throw new IllegalStateException(leerMensajeError(e), e);
+        }
+    }
+
+    /**
+     * Convierte el texto de la respuesta en JSON.
+     */
+    private JsonNode leerJson(String texto) {
+        try {
+            JsonNode datos = mapeador.readTree(texto);
+
+            if (datos == null) {
+                throw new IllegalStateException(
+                        "La API devolvio una respuesta vacia."
+                );
+            }
+
+            return datos;
+
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(
+                    "La API devolvio un JSON invalido.", e
+            );
+        }
+    }
+
+    /**
      * Consulta la reliquia y la pista de un templo.
      */
     @Override
@@ -193,19 +540,10 @@ public class RepositorioPartidas implements AlmacenPartida {
             String partidaId,
             String coordenada) {
 
-        String respuesta;
-
-        try {
-            respuesta = cliente.get(
-                    "/partidas/" + partidaId
-                            + "/templos/" + coordenada
-            );
-        } catch (ClienteApi.ErrorApi e) {
-            // usa el mensaje que manda la API en {"codigo","mensaje"}
-            throw new IllegalStateException(
-                    leerMensajeError(e), e
-            );
-        }
+        String respuesta = consultar(
+                "/partidas/" + partidaId
+                        + "/templos/" + coordenada
+        );
 
         try {
             JsonNode datos = mapeador.readTree(respuesta);
@@ -438,7 +776,7 @@ public class RepositorioPartidas implements AlmacenPartida {
                 || valor.asText().isBlank()) {
 
             throw new IllegalStateException(
-                    "Campo de cofre invalido: " + campo
+                    "Campo invalido en la respuesta de la API: " + campo
             );
         }
 
@@ -453,7 +791,7 @@ public class RepositorioPartidas implements AlmacenPartida {
 
         if (valor == null || !valor.isIntegralNumber()) {
             throw new IllegalStateException(
-                    "Campo numerico de cofre invalido: " + campo
+                    "Campo numerico invalido en la respuesta de la API: " + campo
             );
         }
 
