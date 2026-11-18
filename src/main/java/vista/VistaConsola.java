@@ -79,7 +79,7 @@ public class VistaConsola {
     /** Muestra el menu principal y devuelve la opcion elegida (0 a 5). */
     public int pedirOpcionMenuPrincipal() {
         System.out.println();
-        System.out.println("EXPEDICIÓN - LA ISLA DE LAS RELIQUIAS");
+        System.out.println("EXPEDICIÓN: LA ISLA DE LAS RELIQUIAS");
         System.out.println("1. Registrar jugador");
         System.out.println("2. Nueva partida");
         System.out.println("3. Cargar partida");

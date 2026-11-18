@@ -49,4 +49,16 @@ public class FabricaAcciones {
     public static AccionJuego crearAccion(int opcion, Coordenada destino) {
         return crearAccion(opcion, destino, null, null, null);
     }
+
+    /**
+     * Crea una accion de exploracion utilizando
+     * la reliquia y la pista recibidas de la API.
+     */
+    public static AccionJuego crearAccionExplorar(
+            Reliquia reliquia,
+            Pista pista) {
+
+        return new AccionExplorar(reliquia, pista);
+    }
+
 }
