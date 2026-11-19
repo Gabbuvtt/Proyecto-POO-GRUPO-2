@@ -12,6 +12,10 @@ Proyecto de Programación Orientada a Objetos (UCAB), Fase 1. Consta de dos part
 - Sebastián Serrano
 - Sebastián González
 
+## Informe
+
+El informe del proyecto está en [docs/Informe_Grupo2.pdf](docs/Informe_Grupo2.pdf).
+
 ## Requisitos
 
 - Python 3.10 o superior.
